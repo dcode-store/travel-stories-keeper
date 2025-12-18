@@ -1,28 +1,42 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Memory, MemoryFormData } from '@/types/memory';
+import { useToast } from '@/hooks/use-toast';
 
 const STORAGE_KEY = 'journo-memories';
+const MAX_STORAGE_SIZE = 4 * 1024 * 1024; // 4MB limit (localStorage is ~5MB)
 
 const generateId = () => Math.random().toString(36).substring(2, 15);
+
+// Helper to estimate storage size
+const getStorageSize = (data: unknown): number => {
+  return new Blob([JSON.stringify(data)]).size;
+};
 
 export function useMemories() {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [storageError, setStorageError] = useState(false);
+  const { toast } = useToast();
 
   // Load from localStorage on mount
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        // Sort by date descending (newest first)
-        const sorted = parsed.sort((a: Memory, b: Memory) => 
-          new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-        setMemories(sorted);
-      } catch (e) {
-        console.error('Failed to parse memories:', e);
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          const sorted = parsed.sort((a: Memory, b: Memory) => 
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+          );
+          setMemories(sorted);
+        } catch (e) {
+          console.error('Failed to parse memories:', e);
+          // Clear corrupted data
+          localStorage.removeItem(STORAGE_KEY);
+        }
       }
+    } catch (e) {
+      console.error('Failed to access localStorage:', e);
     }
     setIsLoading(false);
   }, []);
@@ -30,9 +44,30 @@ export function useMemories() {
   // Save to localStorage whenever memories change
   useEffect(() => {
     if (!isLoading) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(memories));
+      try {
+        const dataSize = getStorageSize(memories);
+        if (dataSize > MAX_STORAGE_SIZE) {
+          setStorageError(true);
+          toast({
+            title: 'Storage limit reached',
+            description: 'Your memories are too large to save locally. Consider removing some images or exporting to PDF.',
+            variant: 'destructive',
+          });
+          return;
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(memories));
+        setStorageError(false);
+      } catch (e) {
+        console.error('Failed to save memories:', e);
+        setStorageError(true);
+        toast({
+          title: 'Storage error',
+          description: 'Could not save memories. Storage may be full.',
+          variant: 'destructive',
+        });
+      }
     }
-  }, [memories, isLoading]);
+  }, [memories, isLoading, toast]);
 
   const addMemory = useCallback((data: MemoryFormData) => {
     const now = Date.now();
@@ -69,11 +104,19 @@ export function useMemories() {
     setMemories(prev => prev.filter(memory => memory.id !== id));
   }, []);
 
+  const clearAllMemories = useCallback(() => {
+    setMemories([]);
+    localStorage.removeItem(STORAGE_KEY);
+    setStorageError(false);
+  }, []);
+
   return {
     memories,
     isLoading,
+    storageError,
     addMemory,
     updateMemory,
     deleteMemory,
+    clearAllMemories,
   };
 }

@@ -30,27 +30,51 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
   const [images, setImages] = useState<string[]>(initialData?.images || []);
   const [videoUrl, setVideoUrl] = useState(initialData?.videoUrl || '');
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Compress image to reduce storage size
+  const compressImage = (file: File, maxWidth = 800, quality = 0.7): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        const ratio = Math.min(maxWidth / img.width, maxWidth / img.height, 1);
+        canvas.width = img.width * ratio;
+        canvas.height = img.height * ratio;
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    Array.from(files).forEach((file) => {
-      if (file.size > 5 * 1024 * 1024) {
+    for (const file of Array.from(files)) {
+      if (file.size > 10 * 1024 * 1024) {
         toast({
           title: 'Image too large',
-          description: 'Please select images under 5MB',
+          description: 'Please select images under 10MB',
           variant: 'destructive',
         });
-        return;
+        continue;
       }
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setImages((prev) => [...prev, result]);
-      };
-      reader.readAsDataURL(file);
-    });
+      try {
+        const compressed = await compressImage(file);
+        setImages((prev) => [...prev, compressed]);
+      } catch (error) {
+        toast({
+          title: 'Failed to process image',
+          description: 'Could not load the image',
+          variant: 'destructive',
+        });
+      }
+    }
 
     // Reset input
     if (fileInputRef.current) {
