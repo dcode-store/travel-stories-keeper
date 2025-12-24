@@ -214,77 +214,104 @@ export function ItineraryForm({ open, onOpenChange, onSubmit, initialData }: Iti
             </div>
           )}
 
-          {/* Step 2: Where & When */}
+          {/* Step 2: Where & When - Q&A Style */}
           {step === 2 && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium mb-1">Where are you going?</h3>
-                <p className="text-sm text-muted-foreground">
-                  {formData.tripType === 'solo' && 'Your solo adventure awaits!'}
-                  {formData.tripType === 'couple' && 'Where will love take you both?'}
-                  {formData.tripType === 'family' && 'Create memories with the whole family!'}
-                  {formData.tripType === 'group' && 'Epic trip with your crew!'}
-                </p>
+            <div className="space-y-8">
+              {/* Question 1: Where */}
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+                    <MapPin className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-medium">Where are you heading?</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {formData.tripType === 'solo' && 'Your solo adventure awaits!'}
+                      {formData.tripType === 'couple' && 'Where will love take you both?'}
+                      {formData.tripType === 'family' && 'Where is the family going?'}
+                      {formData.tripType === 'group' && 'Where is the crew heading?'}
+                    </p>
+                    <Input
+                      value={formData.destination}
+                      onChange={e => setFormData(prev => ({ ...prev, destination: e.target.value }))}
+                      placeholder="Paris, France"
+                      className="text-lg bg-muted/50 border-0 focus-visible:ring-primary"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="destination" className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" /> Destination *
-                  </Label>
-                  <Input
-                    id="destination"
-                    value={formData.destination}
-                    onChange={e => setFormData(prev => ({ ...prev, destination: e.target.value }))}
-                    placeholder="Paris, France"
-                    className="text-lg"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="startDate" className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" /> From *
-                    </Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      value={formData.startDate}
-                      onChange={e => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                    />
+              {/* Question 2: When */}
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+                    <Calendar className="w-4 h-4 text-primary" />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="endDate">To *</Label>
-                    <Input
-                      id="endDate"
-                      type="date"
-                      value={formData.endDate}
-                      min={formData.startDate}
-                      onChange={e => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
-                    />
+                  <div className="flex-1">
+                    <h3 className="text-lg font-medium">When are you going?</h3>
+                    <p className="text-sm text-muted-foreground mb-3">Pick your travel dates</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <span className="text-xs text-muted-foreground mb-1 block">From</span>
+                        <Input
+                          type="date"
+                          value={formData.startDate}
+                          onChange={e => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                          className="bg-muted/50 border-0 focus-visible:ring-primary"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground mb-1 block">To</span>
+                        <Input
+                          type="date"
+                          value={formData.endDate}
+                          min={formData.startDate}
+                          onChange={e => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
+                          className="bg-muted/50 border-0 focus-visible:ring-primary"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
+              </div>
 
-                {formData.tripType === 'couple' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="companion">Your partner's name</Label>
+              {/* Question 3: Companion (Couple only) */}
+              {formData.tripType === 'couple' && (
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+                      <span className="text-sm">💕</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-medium">Who's your travel partner?</h3>
+                      <p className="text-sm text-muted-foreground mb-3">The special someone joining you</p>
+                      <Input
+                        value={formData.companionName}
+                        onChange={e => setFormData(prev => ({ ...prev, companionName: e.target.value }))}
+                        placeholder="Their name..."
+                        className="bg-muted/50 border-0 focus-visible:ring-primary"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Question 4: Trip Name */}
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-sm">✨</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-medium">What should we call this trip?</h3>
+                    <p className="text-sm text-muted-foreground mb-3">Give it a memorable name (optional)</p>
                     <Input
-                      id="companion"
-                      value={formData.companionName}
-                      onChange={e => setFormData(prev => ({ ...prev, companionName: e.target.value }))}
-                      placeholder="Who's your travel buddy?"
+                      value={formData.title}
+                      onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder={`e.g., Summer in ${formData.destination || 'Paris'}`}
+                      className="bg-muted/50 border-0 focus-visible:ring-primary"
                     />
                   </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="title">Trip name (optional)</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder={`e.g., Summer in ${formData.destination || 'Italy'}`}
-                  />
                 </div>
               </div>
             </div>
