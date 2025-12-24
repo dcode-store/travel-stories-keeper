@@ -15,7 +15,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Hotel, MapPin, Calendar, Phone, Mail, Globe, DollarSign, FileText, Link, ClipboardCheck, ImagePlus, X, ChevronDown } from 'lucide-react';
+import { Hotel, MapPin, Calendar, DollarSign, FileText, Link, ClipboardCheck, ImagePlus, X, ChevronDown } from 'lucide-react';
 
 interface AccommodationFormProps {
   open: boolean;
@@ -44,9 +44,6 @@ export function AccommodationForm({
     reservationNumber: '',
     notes: '',
     cost: '',
-    phone: '',
-    email: '',
-    website: '',
     bookingLink: '',
     confirmationLink: '',
     ticketLink: '',
@@ -69,9 +66,6 @@ export function AccommodationForm({
         reservationNumber: initialData.reservationNumber || '',
         notes: initialData.notes || '',
         cost: initialData.cost?.toString() || '',
-        phone: initialData.phone || '',
-        email: initialData.email || '',
-        website: initialData.website || '',
         bookingLink: initialData.bookingLink || '',
         confirmationLink: initialData.confirmationLink || '',
         ticketLink: initialData.ticketLink || '',
@@ -79,7 +73,7 @@ export function AccommodationForm({
       setBookingScreenshots(initialData.bookingScreenshots || []);
       setConfirmationScreenshots(initialData.confirmationScreenshots || []);
       // Show optional fields if any have data
-      if (initialData.address || initialData.phone || initialData.email || initialData.website || initialData.cost || initialData.notes) {
+      if (initialData.address || initialData.cost || initialData.notes) {
         setShowOptionalFields(true);
       }
     } else {
@@ -91,9 +85,6 @@ export function AccommodationForm({
         reservationNumber: '',
         notes: '',
         cost: '',
-        phone: '',
-        email: '',
-        website: '',
         bookingLink: '',
         confirmationLink: '',
         ticketLink: '',
@@ -143,9 +134,6 @@ export function AccommodationForm({
       ...(formData.reservationNumber && { reservationNumber: formData.reservationNumber }),
       ...(formData.notes && { notes: formData.notes }),
       ...(formData.cost && { cost: parseFloat(formData.cost), currency }),
-      ...(formData.phone && { phone: formData.phone }),
-      ...(formData.email && { email: formData.email }),
-      ...(formData.website && { website: formData.website }),
       ...(formData.bookingLink && { bookingLink: formData.bookingLink }),
       ...(formData.confirmationLink && { confirmationLink: formData.confirmationLink }),
       ...(formData.ticketLink && { ticketLink: formData.ticketLink }),
@@ -399,42 +387,6 @@ export function AccommodationForm({
                     placeholder="0.00"
                     className="pl-10"
                   />
-                </div>
-              </div>
-
-              {/* Contact Info */}
-              <div className="space-y-2">
-                <Label className="text-sm text-muted-foreground">Contact Information</Label>
-                <div className="grid grid-cols-1 gap-3">
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="Phone number"
-                      className="pl-10"
-                    />
-                  </div>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="hotel@example.com"
-                      className="pl-10"
-                    />
-                  </div>
-                  <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      type="url"
-                      value={formData.website}
-                      onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                      placeholder="https://hotel-website.com"
-                      className="pl-10"
-                    />
-                  </div>
                 </div>
               </div>
 
