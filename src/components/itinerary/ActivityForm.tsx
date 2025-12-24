@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Activity } from '@/types/itinerary';
-import { MapPin, Clock, DollarSign } from 'lucide-react';
+import { MapPin, Clock, Bell, ChevronDown, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface ActivityFormProps {
   open: boolean;
@@ -18,8 +21,18 @@ interface ActivityFormProps {
   currency?: string;
 }
 
+type ReminderOption = 'none' | '10min' | '30min' | '1hour';
+
+const REMINDER_OPTIONS: { value: ReminderOption; label: string }[] = [
+  { value: 'none', label: 'No reminder' },
+  { value: '10min', label: '10 mins before' },
+  { value: '30min', label: '30 mins before' },
+  { value: '1hour', label: '1 hour before' },
+];
+
 export function ActivityForm({ open, onOpenChange, onSubmit, initialData, selectedDate, currency = 'USD' }: ActivityFormProps) {
   const { toast } = useToast();
+  const [showMore, setShowMore] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     date: selectedDate || new Date().toISOString().split('T')[0],
@@ -32,6 +45,7 @@ export function ActivityForm({ open, onOpenChange, onSubmit, initialData, select
     currency: currency,
     booked: false,
     confirmationNumber: '',
+    reminder: 'none' as ReminderOption,
   });
 
   useEffect(() => {
@@ -49,7 +63,10 @@ export function ActivityForm({ open, onOpenChange, onSubmit, initialData, select
           currency: initialData.currency || currency,
           booked: initialData.booked || false,
           confirmationNumber: initialData.confirmationNumber || '',
+          reminder: (initialData as any).reminder || 'none',
         });
+        // Show more if there's existing data in secondary fields
+        setShowMore(!!(initialData.location || initialData.booked || (initialData as any).reminder !== 'none'));
       } else {
         setFormData({
           name: '',
@@ -63,7 +80,9 @@ export function ActivityForm({ open, onOpenChange, onSubmit, initialData, select
           currency: currency,
           booked: false,
           confirmationNumber: '',
+          reminder: 'none',
         });
+        setShowMore(false);
       }
     }
   }, [initialData, open, selectedDate, currency]);
@@ -82,127 +101,166 @@ export function ActivityForm({ open, onOpenChange, onSubmit, initialData, select
     onOpenChange(false);
   };
 
+  const formattedDate = formData.date ? format(new Date(formData.date), 'EEE, MMM d') : '';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">
             {initialData ? 'Edit Activity' : 'Add Activity'}
           </DialogTitle>
+          {/* Date badge - subtle, not a field */}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
+            <Calendar className="w-3.5 h-3.5" />
+            <span>{formattedDate}</span>
+            <button
+              type="button"
+              className="text-xs text-primary hover:underline"
+              onClick={() => setShowMore(true)}
+            >
+              Change
+            </button>
+          </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          {/* Primary: Activity Name */}
           <div className="space-y-2">
-            <Label htmlFor="name">What are you doing? *</Label>
+            <Label htmlFor="name">What are you doing?</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Visit the Eiffel Tower"
-              className="font-medium"
+              className="text-lg font-medium bg-muted/50 border-0 focus-visible:ring-primary"
+              autoFocus
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="date">Date *</Label>
-              <Input
-                id="date"
-                type="date"
-                value={formData.date}
-                onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="time" className="flex items-center gap-1">
-                <Clock className="w-3 h-3" /> Time
-              </Label>
-              <Input
-                id="time"
-                type="time"
-                value={formData.time}
-                onChange={e => setFormData(prev => ({ ...prev, time: e.target.value }))}
-              />
-            </div>
-          </div>
-
+          {/* Primary: Time */}
           <div className="space-y-2">
-            <Label htmlFor="location" className="flex items-center gap-1">
-              <MapPin className="w-3 h-3" /> Location
+            <Label htmlFor="time" className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5" /> What time?
             </Label>
             <Input
-              id="location"
-              value={formData.location}
-              onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
-              placeholder="Champ de Mars, Paris"
+              id="time"
+              type="time"
+              value={formData.time}
+              onChange={e => setFormData(prev => ({ ...prev, time: e.target.value }))}
+              className="bg-muted/50 border-0 focus-visible:ring-primary w-32"
             />
           </div>
 
+          {/* Primary: Notes */}
           <div className="space-y-2">
-            <Label htmlFor="description">Notes</Label>
+            <Label htmlFor="description" className="flex items-center gap-1.5">
+              <Bell className="w-3.5 h-3.5" /> Note to remember
+            </Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Any details to remember..."
-              className="min-h-[60px] resize-none"
+              placeholder="Anything important to remember..."
+              className="min-h-[70px] resize-none bg-muted/50 border-0 focus-visible:ring-primary"
             />
+            
+            {/* Reminder options - shown with notes */}
+            {formData.description && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {REMINDER_OPTIONS.map(option => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, reminder: option.value }))}
+                    className={cn(
+                      'px-3 py-1 rounded-full text-xs transition-all',
+                      formData.reminder === option.value
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                    )}
+                  >
+                    {option.value === 'none' ? '🔕' : '🔔'} {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="cost" className="flex items-center gap-1">
-                <DollarSign className="w-3 h-3" /> Cost
-              </Label>
-              <Input
-                id="cost"
-                type="number"
-                value={formData.cost || ''}
-                onChange={e => setFormData(prev => ({ ...prev, cost: e.target.value ? Number(e.target.value) : undefined }))}
-                placeholder="0"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
-              <Input
-                id="currency"
-                value={formData.currency}
-                onChange={e => setFormData(prev => ({ ...prev, currency: e.target.value }))}
-                placeholder="USD"
-              />
-            </div>
-          </div>
+          {/* More Options - Collapsible */}
+          <Collapsible open={showMore} onOpenChange={setShowMore}>
+            <CollapsibleTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full justify-between text-muted-foreground hover:text-foreground text-sm h-9"
+              >
+                More options
+                <ChevronDown className={cn('w-4 h-4 transition-transform', showMore && 'rotate-180')} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 pt-3">
+              {/* Date (hidden here normally) */}
+              <div className="space-y-2">
+                <Label htmlFor="date">Date</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={formData.date}
+                  onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                  className="bg-muted/50 border-0"
+                />
+              </div>
 
-          <div className="flex items-center justify-between py-2">
-            <div>
-              <Label htmlFor="booked" className="text-sm font-medium">Already booked?</Label>
-              <p className="text-xs text-muted-foreground">Mark if you have a reservation</p>
-            </div>
-            <Switch
-              id="booked"
-              checked={formData.booked}
-              onCheckedChange={checked => setFormData(prev => ({ ...prev, booked: checked }))}
-            />
-          </div>
+              {/* Location */}
+              <div className="space-y-2">
+                <Label htmlFor="location" className="flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5" /> Location
+                </Label>
+                <Input
+                  id="location"
+                  value={formData.location}
+                  onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                  placeholder="Champ de Mars, Paris"
+                  className="bg-muted/50 border-0"
+                />
+              </div>
 
-          {formData.booked && (
-            <div className="space-y-2">
-              <Label htmlFor="confirmation">Confirmation #</Label>
-              <Input
-                id="confirmation"
-                value={formData.confirmationNumber}
-                onChange={e => setFormData(prev => ({ ...prev, confirmationNumber: e.target.value }))}
-                placeholder="Booking reference"
-              />
-            </div>
-          )}
+              {/* Booked toggle */}
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <Label htmlFor="booked" className="text-sm font-medium">Already booked?</Label>
+                  <p className="text-xs text-muted-foreground">Has a reservation</p>
+                </div>
+                <Switch
+                  id="booked"
+                  checked={formData.booked}
+                  onCheckedChange={checked => setFormData(prev => ({ ...prev, booked: checked }))}
+                />
+              </div>
 
+              {formData.booked && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirmation">Confirmation #</Label>
+                  <Input
+                    id="confirmation"
+                    value={formData.confirmationNumber}
+                    onChange={e => setFormData(prev => ({ ...prev, confirmationNumber: e.target.value }))}
+                    placeholder="Booking reference"
+                    className="bg-muted/50 border-0"
+                  />
+                </div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Actions */}
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit">
-              {initialData ? 'Save Changes' : 'Add Activity'}
+              {initialData ? 'Save' : 'Add'}
             </Button>
           </div>
         </form>
