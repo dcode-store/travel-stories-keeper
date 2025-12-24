@@ -4,11 +4,11 @@ import { useLastRoute, useRedirectToLastRoute } from '@/hooks/useLastRoute';
 import { AppHeader } from '@/components/AppHeader';
 import { Timeline } from '@/components/Timeline';
 import { MemoryForm } from '@/components/MemoryForm';
+import { ShareDialog } from '@/components/share/ShareDialog';
 import { Memory, MemoryFormData } from '@/types/memory';
-import { exportToPDF } from '@/lib/exportPDF';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Plus, FileDown, BookOpen } from 'lucide-react';
+import { Plus, Share2, BookOpen } from 'lucide-react';
 
 const Index = () => {
   const { memories, isLoading, addMemory, updateMemory, deleteMemory } = useMemories();
@@ -19,6 +19,7 @@ const Index = () => {
   useRedirectToLastRoute();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [editingMemory, setEditingMemory] = useState<Memory | undefined>();
 
   const handleAddMemory = () => {
@@ -55,29 +56,16 @@ const Index = () => {
     });
   };
 
-  const handleExport = async () => {
+  const handleShare = () => {
     if (memories.length === 0) {
       toast({
-        title: 'No memories to export',
-        description: 'Add some memories first before exporting.',
+        title: 'No memories to share',
+        description: 'Add some memories first before sharing.',
         variant: 'destructive',
       });
       return;
     }
-
-    try {
-      await exportToPDF(memories);
-      toast({
-        title: 'Export ready',
-        description: 'Your memory lane is ready to print or save as PDF.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Export failed',
-        description: error instanceof Error ? error.message : 'Failed to export memories.',
-        variant: 'destructive',
-      });
-    }
+    setIsShareOpen(true);
   };
 
   if (isLoading) {
@@ -104,9 +92,9 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-2">
               {memories.length > 0 && (
-                <Button variant="outline" size="sm" onClick={handleExport}>
-                  <FileDown className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">Export</span>
+                <Button variant="outline" size="sm" onClick={handleShare}>
+                  <Share2 className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Share</span>
                 </Button>
               )}
               <Button onClick={handleAddMemory} size="sm">
@@ -145,6 +133,12 @@ const Index = () => {
         onOpenChange={setIsFormOpen}
         onSubmit={handleSubmitMemory}
         initialData={editingMemory}
+      />
+
+      <ShareDialog
+        open={isShareOpen}
+        onOpenChange={setIsShareOpen}
+        memories={memories}
       />
     </div>
   );
