@@ -26,6 +26,10 @@ export interface Accommodation {
     phone?: string;
     email?: string;
     website?: string;
+    // Booking links
+    bookingLink?: string;
+    confirmationLink?: string;
+    ticketLink?: string;
 }
 
 export type TransportationType = 'flight' | 'train' | 'bus' | 'car' | 'ferry' | 'taxi' | 'other';
