@@ -74,14 +74,14 @@ export function useItineraries() {
     }, [itineraries, isLoading, toast]);
 
     // CRUD operations for itineraries
-    const addItinerary = useCallback((data: ItineraryFormData): Itinerary => {
+    const addItinerary = useCallback((data: ItineraryFormData | Omit<Itinerary, 'id' | 'createdAt' | 'updatedAt'>): Itinerary => {
         const now = Date.now();
         const newItinerary: Itinerary = {
             id: generateId(),
             ...data,
-            activities: [],
-            accommodations: [],
-            transportation: [],
+            activities: 'activities' in data ? data.activities : [],
+            accommodations: 'accommodations' in data ? data.accommodations : [],
+            transportation: 'transportation' in data ? data.transportation : [],
             createdAt: now,
             updatedAt: now,
         };
