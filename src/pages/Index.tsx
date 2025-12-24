@@ -4,11 +4,13 @@ import { useLastRoute, useRedirectToLastRoute } from '@/hooks/useLastRoute';
 import { AppHeader } from '@/components/AppHeader';
 import { Timeline } from '@/components/Timeline';
 import { MemoryForm } from '@/components/MemoryForm';
+import { MemoryAIPanel } from '@/components/ai/MemoryAIPanel';
 import { Memory, MemoryFormData } from '@/types/memory';
 import { exportToPDF } from '@/lib/exportPDF';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Plus, FileDown, BookOpen } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, FileDown, BookOpen, Sparkles, LayoutList } from 'lucide-react';
 
 const Index = () => {
   const { memories, isLoading, addMemory, updateMemory, deleteMemory } = useMemories();
@@ -20,6 +22,7 @@ const Index = () => {
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingMemory, setEditingMemory] = useState<Memory | undefined>();
+  const [activeTab, setActiveTab] = useState('memories');
 
   const handleAddMemory = () => {
     setEditingMemory(undefined);
@@ -95,7 +98,7 @@ const Index = () => {
       <main className="pt-20 pb-12 px-4">
         <div className="max-w-4xl mx-auto">
           {/* Page Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="font-display text-3xl font-medium">My Memories</h1>
               <p className="text-muted-foreground mt-1">
@@ -116,27 +119,50 @@ const Index = () => {
             </div>
           </div>
 
-          {memories.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
-                <BookOpen className="w-10 h-10 text-primary" />
-              </div>
-              <h2 className="font-display text-2xl mb-2">No memories yet</h2>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Start capturing your special moments. Add your first memory to begin your journey.
-              </p>
-              <Button onClick={handleAddMemory}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Your First Memory
-              </Button>
-            </div>
-          ) : (
-            <Timeline 
-              memories={memories}
-              onEdit={handleEditMemory}
-              onDelete={handleDeleteMemory}
-            />
-          )}
+          {/* Tabs for Memories and AI Insights */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="memories" className="flex items-center gap-2">
+                <LayoutList className="w-4 h-4" />
+                Timeline
+              </TabsTrigger>
+              <TabsTrigger value="insights" className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                AI Insights
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="memories" className="mt-0">
+              {memories.length === 0 ? (
+                <div className="text-center py-20">
+                  <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+                    <BookOpen className="w-10 h-10 text-primary" />
+                  </div>
+                  <h2 className="font-display text-2xl mb-2">No memories yet</h2>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    Start capturing your special moments. Add your first memory to begin your journey.
+                  </p>
+                  <Button onClick={handleAddMemory}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Your First Memory
+                  </Button>
+                </div>
+              ) : (
+                <Timeline 
+                  memories={memories}
+                  onEdit={handleEditMemory}
+                  onDelete={handleDeleteMemory}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="insights" className="mt-0">
+              <MemoryAIPanel 
+                memories={memories} 
+                onUpdateMemory={updateMemory}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
 
