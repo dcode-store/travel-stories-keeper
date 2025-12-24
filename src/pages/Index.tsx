@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMemories } from '@/hooks/useMemories';
+import { useLastRoute, useRedirectToLastRoute } from '@/hooks/useLastRoute';
 import { AppHeader } from '@/components/AppHeader';
 import { Timeline } from '@/components/Timeline';
 import { MemoryForm } from '@/components/MemoryForm';
@@ -12,6 +13,10 @@ import { Plus, FileDown, BookOpen } from 'lucide-react';
 const Index = () => {
   const { memories, isLoading, addMemory, updateMemory, deleteMemory } = useMemories();
   const { toast } = useToast();
+
+  // Track and redirect to last route
+  useLastRoute();
+  useRedirectToLastRoute();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingMemory, setEditingMemory] = useState<Memory | undefined>();
