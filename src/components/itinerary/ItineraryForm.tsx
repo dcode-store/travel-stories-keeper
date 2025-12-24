@@ -93,7 +93,14 @@ export function ItineraryForm({ open, onOpenChange, onSubmit, initialData }: Iti
           childrenCount: 0,
         });
       }
-      setStep(1);
+      // For edit mode, go to final step; for new trip, start at step 1
+      if (initialData) {
+        const editTripType = initialData.tripType || 'solo';
+        const isEditSimple = editTripType === 'solo' || editTripType === 'couple';
+        setStep(isEditSimple ? 3 : 4);
+      } else {
+        setStep(1);
+      }
     }
   }, [initialData, open]);
 
