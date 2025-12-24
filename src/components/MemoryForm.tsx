@@ -76,7 +76,7 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
         mood: initialData.mood || '',
       });
       setShowSecondary(
-        !!(initialData.location || initialData.mood || initialData.tags?.length || initialData.videoUrl)
+        !!(initialData.mood || initialData.tags?.length || initialData.videoUrl)
       );
     } else {
       setFormData({
@@ -213,28 +213,29 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="location" className="flex items-center gap-2">
+              <MapPin className="w-4 h-4" /> Location
+            </Label>
+            <Input
+              id="location"
+              value={formData.location}
+              onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
+              placeholder="Where did this happen?"
+            />
+          </div>
+
           {/* SECONDARY FIELDS */}
           <Collapsible open={showSecondary} onOpenChange={setShowSecondary}>
             <CollapsibleTrigger asChild>
               <Button type="button" variant="ghost" className="w-full justify-between text-muted-foreground hover:text-foreground">
                 <span className="flex items-center gap-2">
-                  <Plus className="w-4 h-4" /> More details (location, mood, tags, video)
+                  <Plus className="w-4 h-4" /> More details (mood, tags, video)
                 </span>
                 <ChevronDown className={`w-4 h-4 transition-transform ${showSecondary ? 'rotate-180' : ''}`} />
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-5 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="location" className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" /> Location
-                </Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                  placeholder="Where did this happen?"
-                />
-              </div>
 
               <div className="space-y-2">
                 <Label>How were you feeling?</Label>
