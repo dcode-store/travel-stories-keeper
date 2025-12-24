@@ -1,4 +1,4 @@
-import { Itinerary, calculateDuration } from '@/types/itinerary';
+import { Itinerary, calculateDuration, TRIP_TYPES, TRIP_THEMES } from '@/types/itinerary';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { MapPin, Calendar, Pencil, Trash2, Eye, Plane, Hotel, Activity } from 'lucide-react';
+import { MapPin, Calendar, Pencil, Trash2, Eye, Plane, Hotel, Activity, Users } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface ItineraryCardProps {
@@ -28,6 +28,13 @@ export function ItineraryCard({ itinerary, onView, onEdit, onDelete }: Itinerary
   const today = new Date().toISOString().split('T')[0];
   const isCurrent = itinerary.startDate <= today && itinerary.endDate >= today;
   const isUpcoming = itinerary.startDate > today;
+  const tripTypeInfo = itinerary.tripType ? TRIP_TYPES[itinerary.tripType] : null;
+
+  const getTravelerCount = () => {
+    const adults = itinerary.adultsCount || (itinerary.tripType === 'solo' ? 1 : itinerary.tripType === 'couple' ? 2 : 1);
+    const children = itinerary.childrenCount || 0;
+    return adults + children;
+  };
 
   return (
     <Card className="group hover:shadow-md transition-shadow overflow-hidden">
@@ -35,14 +42,16 @@ export function ItineraryCard({ itinerary, onView, onEdit, onDelete }: Itinerary
         <div className="flex flex-col sm:flex-row">
           {/* Cover Image or Gradient */}
           <div
-            className="w-full sm:w-40 h-32 sm:h-auto bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"
+            className="w-full sm:w-40 h-32 sm:h-auto bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center relative"
             style={
               itinerary.coverImage
                 ? { backgroundImage: `url(${itinerary.coverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
                 : undefined
             }
           >
-            {!itinerary.coverImage && <Plane className="w-10 h-10 text-primary/40" />}
+            {!itinerary.coverImage && (
+              <span className="text-4xl">{tripTypeInfo?.icon || '✈️'}</span>
+            )}
           </div>
 
           {/* Content */}
@@ -70,12 +79,29 @@ export function ItineraryCard({ itinerary, onView, onEdit, onDelete }: Itinerary
                   </span>
                 </div>
 
+                {/* Trip themes */}
+                {itinerary.tripThemes && itinerary.tripThemes.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {itinerary.tripThemes.slice(0, 3).map(theme => (
+                      <span key={theme} className="text-xs bg-muted px-2 py-0.5 rounded-full">
+                        {TRIP_THEMES[theme]?.icon} {TRIP_THEMES[theme]?.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 {itinerary.description && (
                   <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{itinerary.description}</p>
                 )}
 
                 {/* Stats */}
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  {tripTypeInfo && (
+                    <span className="flex items-center gap-1">
+                      <Users className="w-3.5 h-3.5" />
+                      {tripTypeInfo.label} ({getTravelerCount()})
+                    </span>
+                  )}
                   <span className="flex items-center gap-1">
                     <Activity className="w-3.5 h-3.5" />
                     {itinerary.activities.length} activities
@@ -83,10 +109,6 @@ export function ItineraryCard({ itinerary, onView, onEdit, onDelete }: Itinerary
                   <span className="flex items-center gap-1">
                     <Hotel className="w-3.5 h-3.5" />
                     {itinerary.accommodations.length} stays
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Plane className="w-3.5 h-3.5" />
-                    {itinerary.transportation.length} transports
                   </span>
                   <span>{duration} days</span>
                 </div>
