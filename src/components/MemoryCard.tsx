@@ -38,7 +38,7 @@ export function MemoryCard({ memory, isActive, onEdit, onDelete, onShare }: Memo
   return (
     <Card
       className={`
-        memory-card p-6 md:p-8 border-0 shadow-lg bg-card/80 backdrop-blur-sm
+        group memory-card p-6 md:p-8 border-0 shadow-lg bg-card/80 backdrop-blur-sm
         transition-all duration-500 ease-out
         ${isActive 
           ? 'memory-card-expanded shadow-xl ring-1 ring-primary/10' 
