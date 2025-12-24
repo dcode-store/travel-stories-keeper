@@ -48,6 +48,39 @@ export interface Transportation {
     currency?: string;
 }
 
+// Trip types
+export type TripType = 'solo' | 'couple' | 'family' | 'group';
+
+export const TRIP_TYPES: Record<TripType, { label: string; icon: string; description: string }> = {
+    solo: { label: 'Solo', icon: '🧳', description: 'Just me, myself & I' },
+    couple: { label: 'Couple', icon: '💑', description: 'Romantic getaway for two' },
+    family: { label: 'Family', icon: '👨‍👩‍👧‍👦', description: 'Adventure with the whole family' },
+    group: { label: 'Group', icon: '👥', description: 'Fun with friends' },
+};
+
+// Trip themes/vibes
+export type TripTheme = 'beach' | 'adventure' | 'cultural' | 'relaxation' | 'roadtrip' | 'nature' | 'city' | 'romantic';
+
+export const TRIP_THEMES: Record<TripTheme, { label: string; icon: string }> = {
+    beach: { label: 'Beach & Sun', icon: '🏖️' },
+    adventure: { label: 'Adventure', icon: '🏔️' },
+    cultural: { label: 'Cultural', icon: '🏛️' },
+    relaxation: { label: 'Relaxation', icon: '🧘' },
+    roadtrip: { label: 'Road Trip', icon: '🚗' },
+    nature: { label: 'Nature', icon: '🌲' },
+    city: { label: 'City Break', icon: '🌆' },
+    romantic: { label: 'Romantic', icon: '💕' },
+};
+
+// Traveler info
+export interface Traveler {
+    id: string;
+    name: string;
+    isChild?: boolean;
+    age?: number;
+    specialRequirements?: string;
+}
+
 export interface Itinerary {
     id: string;
     title: string;
@@ -63,6 +96,13 @@ export interface Itinerary {
     tags?: string[];
     budget?: number;
     currency?: string;
+    // New fields
+    tripType: TripType;
+    tripThemes?: TripTheme[];
+    travelers?: Traveler[];
+    companionName?: string; // For couple trips
+    adultsCount?: number;
+    childrenCount?: number;
     createdAt: number;
     updatedAt: number;
 }
@@ -78,6 +118,13 @@ export interface ItineraryFormData {
     tags?: string[];
     budget?: number;
     currency?: string;
+    // New fields
+    tripType: TripType;
+    tripThemes?: TripTheme[];
+    travelers?: Traveler[];
+    companionName?: string;
+    adultsCount?: number;
+    childrenCount?: number;
 }
 
 // Helper to calculate trip duration in days
