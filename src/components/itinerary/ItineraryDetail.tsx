@@ -362,9 +362,11 @@ function DayCard({
   onEditActivity,
   onDeleteActivity,
 }: DayCardProps) {
+  const isEmpty = activities.length === 0;
+  
   return (
-    <Card className={isPastDay ? 'opacity-60' : isToday ? 'ring-2 ring-primary/50' : ''}>
-      <CardHeader className="pb-3">
+    <Card className={`group ${isPastDay ? 'opacity-60' : isToday ? 'ring-2 ring-primary/50' : ''}`}>
+      <CardHeader className={`pb-3 ${isEmpty && !isPastDay ? 'py-4' : ''}`}>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-3 text-lg">
             <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
@@ -382,81 +384,75 @@ function DayCard({
               variant="ghost"
               size="sm"
               onClick={() => onAddActivity(date)}
-              className="text-muted-foreground hover:text-primary"
+              className={`text-muted-foreground hover:text-primary transition-all ${
+                isEmpty ? 'group-hover:bg-primary group-hover:text-primary-foreground' : ''
+              }`}
             >
               <Plus className="w-4 h-4 mr-1" />
-              Add
+              {isEmpty ? 'Add activity' : 'Add'}
             </Button>
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        {activities.length === 0 ? (
-          isPastDay ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">No activities</p>
+      {(activities.length > 0 || isPastDay) && (
+        <CardContent>
+          {activities.length === 0 && isPastDay ? (
+            <p className="text-sm text-muted-foreground py-2 text-center">No activities</p>
           ) : (
-            <button
-              onClick={() => onAddActivity(date)}
-              className="w-full py-6 border-2 border-dashed border-muted-foreground/20 rounded-lg text-sm text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
-            >
-              <Plus className="w-4 h-4 mx-auto mb-1" />
-              Add your first activity
-            </button>
-          )
-        ) : (
-          <div className="space-y-3">
-            {activities.map(activity => (
-              <div 
-                key={activity.id} 
-                className="flex gap-3 p-3 rounded-lg bg-muted/50 group cursor-pointer hover:bg-muted transition-colors"
-                onClick={() => onEditActivity(activity)}
-              >
-                <Activity className="w-4 h-4 mt-0.5 text-primary" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{activity.name}</span>
-                    {activity.booked && <Badge variant="outline" className="text-xs">Booked</Badge>}
+            <div className="space-y-3">
+              {activities.map(activity => (
+                <div 
+                  key={activity.id} 
+                  className="flex gap-3 p-3 rounded-lg bg-muted/50 group/activity cursor-pointer hover:bg-muted transition-colors"
+                  onClick={() => onEditActivity(activity)}
+                >
+                  <Activity className="w-4 h-4 mt-0.5 text-primary" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{activity.name}</span>
+                      {activity.booked && <Badge variant="outline" className="text-xs">Booked</Badge>}
+                    </div>
+                    {activity.time && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {activity.time}
+                        {activity.endTime && ` - ${activity.endTime}`}
+                      </p>
+                    )}
+                    {activity.location && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {activity.location}
+                      </p>
+                    )}
+                    {activity.description && (
+                      <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
+                    )}
                   </div>
-                  {activity.time && (
-                    <p className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {activity.time}
-                      {activity.endTime && ` - ${activity.endTime}`}
-                    </p>
-                  )}
-                  {activity.location && (
-                    <p className="text-sm text-muted-foreground flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
-                      {activity.location}
-                    </p>
-                  )}
-                  {activity.description && (
-                    <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {activity.cost && (
+                      <span className="text-sm text-muted-foreground">
+                        {activity.currency || itinerary.currency || '$'}{activity.cost}
+                      </span>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="opacity-0 group-hover/activity:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteActivity(activity.id);
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {activity.cost && (
-                    <span className="text-sm text-muted-foreground">
-                      {activity.currency || itinerary.currency || '$'}{activity.cost}
-                    </span>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteActivity(activity.id);
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      )}
     </Card>
   );
 }
