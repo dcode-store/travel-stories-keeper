@@ -7,10 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Activity } from '@/types/itinerary';
-import { MapPin, Clock, Bell, ChevronDown, Calendar } from 'lucide-react';
+import { MapPin, Clock, Bell, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 
 interface ActivityFormProps {
   open: boolean;
@@ -101,7 +100,7 @@ export function ActivityForm({ open, onOpenChange, onSubmit, initialData, select
     onOpenChange(false);
   };
 
-  const formattedDate = formData.date ? format(new Date(formData.date), 'EEE, MMM d') : '';
+  
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -110,18 +109,6 @@ export function ActivityForm({ open, onOpenChange, onSubmit, initialData, select
           <DialogTitle className="font-display text-xl">
             {initialData ? 'Edit Activity' : 'Add Activity'}
           </DialogTitle>
-          {/* Date badge - subtle, not a field */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
-            <Calendar className="w-3.5 h-3.5" />
-            <span>{formattedDate}</span>
-            <button
-              type="button"
-              className="text-xs text-primary hover:underline"
-              onClick={() => setShowMore(true)}
-            >
-              Change
-            </button>
-          </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
@@ -200,18 +187,6 @@ export function ActivityForm({ open, onOpenChange, onSubmit, initialData, select
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-4 pt-3">
-              {/* Date (hidden here normally) */}
-              <div className="space-y-2">
-                <Label htmlFor="date">Date</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                  className="bg-muted/50 border-0"
-                />
-              </div>
-
               {/* Location */}
               <div className="space-y-2">
                 <Label htmlFor="location" className="flex items-center gap-1.5">
@@ -221,7 +196,7 @@ export function ActivityForm({ open, onOpenChange, onSubmit, initialData, select
                   id="location"
                   value={formData.location}
                   onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                  placeholder="Champ de Mars, Paris"
+                  placeholder="Restaurant, club, museum, park..."
                   className="bg-muted/50 border-0"
                 />
               </div>
