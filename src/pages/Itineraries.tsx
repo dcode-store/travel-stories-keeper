@@ -6,7 +6,7 @@ import { ItineraryDetail } from '@/components/itinerary/ItineraryDetail';
 import { AppHeader } from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Itinerary, ItineraryFormData } from '@/types/itinerary';
+import { Itinerary, ItineraryFormData, Activity } from '@/types/itinerary';
 import { Plus, Plane, Calendar, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -20,6 +20,10 @@ const Itineraries = () => {
     addItinerary,
     updateItinerary,
     deleteItinerary,
+    getItinerary,
+    addActivity,
+    updateActivity,
+    deleteActivity,
   } = useItineraries();
   const { toast } = useToast();
 
@@ -59,6 +63,9 @@ const Itineraries = () => {
     setSelectedItinerary(itinerary);
   };
 
+  // Keep selectedItinerary in sync with updates
+  const currentItinerary = selectedItinerary ? getItinerary(selectedItinerary.id) : undefined;
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -67,13 +74,25 @@ const Itineraries = () => {
     );
   }
 
-  if (selectedItinerary) {
+  if (currentItinerary) {
     return (
       <ItineraryDetail
-        itinerary={selectedItinerary}
+        itinerary={currentItinerary}
         onBack={() => setSelectedItinerary(undefined)}
-        onEdit={() => handleEdit(selectedItinerary)}
-        onDelete={() => handleDelete(selectedItinerary.id)}
+        onEdit={() => handleEdit(currentItinerary)}
+        onDelete={() => handleDelete(currentItinerary.id)}
+        onAddActivity={(data) => {
+          addActivity(currentItinerary.id, data);
+          toast({ title: 'Activity added', description: 'The activity has been added to your itinerary.' });
+        }}
+        onUpdateActivity={(activityId, data) => {
+          updateActivity(currentItinerary.id, activityId, data);
+          toast({ title: 'Activity updated', description: 'The activity has been saved.' });
+        }}
+        onDeleteActivity={(activityId) => {
+          deleteActivity(currentItinerary.id, activityId);
+          toast({ title: 'Activity deleted', description: 'The activity has been removed.' });
+        }}
       />
     );
   }

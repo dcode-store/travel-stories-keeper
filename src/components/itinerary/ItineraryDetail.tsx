@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Itinerary, getItineraryDates, getActivitiesForDate, TRANSPORTATION_TYPES, calculateDuration } from '@/types/itinerary';
+import { Itinerary, Activity as ActivityType, getItineraryDates, getActivitiesForDate, TRANSPORTATION_TYPES, calculateDuration } from '@/types/itinerary';
+import { ActivityForm } from './ActivityForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Pencil, Trash2, MapPin, Calendar, Clock, DollarSign, Hotel, Plane, Activity } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, MapPin, Calendar, Clock, DollarSign, Hotel, Plane, Activity, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface ItineraryDetailProps {
@@ -23,11 +24,46 @@ interface ItineraryDetailProps {
   onBack: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onAddActivity: (activity: Omit<ActivityType, 'id'>) => void;
+  onUpdateActivity: (activityId: string, activity: Partial<ActivityType>) => void;
+  onDeleteActivity: (activityId: string) => void;
 }
 
-export function ItineraryDetail({ itinerary, onBack, onEdit, onDelete }: ItineraryDetailProps) {
+export function ItineraryDetail({ 
+  itinerary, 
+  onBack, 
+  onEdit, 
+  onDelete,
+  onAddActivity,
+  onUpdateActivity,
+  onDeleteActivity,
+}: ItineraryDetailProps) {
   const dates = getItineraryDates(itinerary.startDate, itinerary.endDate);
   const duration = calculateDuration(itinerary.startDate, itinerary.endDate);
+  
+  const [activityFormOpen, setActivityFormOpen] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<ActivityType | undefined>();
+  const [selectedDate, setSelectedDate] = useState<string | undefined>();
+
+  const handleAddActivity = (date?: string) => {
+    setEditingActivity(undefined);
+    setSelectedDate(date);
+    setActivityFormOpen(true);
+  };
+
+  const handleEditActivity = (activity: ActivityType) => {
+    setEditingActivity(activity);
+    setSelectedDate(activity.date);
+    setActivityFormOpen(true);
+  };
+
+  const handleActivitySubmit = (data: Omit<ActivityType, 'id'>) => {
+    if (editingActivity) {
+      onUpdateActivity(editingActivity.id, data);
+    } else {
+      onAddActivity(data);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -125,20 +161,41 @@ export function ItineraryDetail({ itinerary, onBack, onEdit, onDelete }: Itinera
               return (
                 <Card key={date}>
                   <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-3 text-lg">
-                      <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
-                        {index + 1}
-                      </span>
-                      {format(new Date(date), 'EEEE, MMMM d')}
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-lg">
+                        <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
+                          {index + 1}
+                        </span>
+                        {format(new Date(date), 'EEEE, MMMM d')}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleAddActivity(date)}
+                        className="text-muted-foreground hover:text-primary"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Add
+                      </Button>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     {activities.length === 0 ? (
-                      <p className="text-sm text-muted-foreground italic">No activities planned</p>
+                      <button
+                        onClick={() => handleAddActivity(date)}
+                        className="w-full py-6 border-2 border-dashed border-muted-foreground/20 rounded-lg text-sm text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                      >
+                        <Plus className="w-4 h-4 mx-auto mb-1" />
+                        Add your first activity
+                      </button>
                     ) : (
                       <div className="space-y-3">
                         {activities.map(activity => (
-                          <div key={activity.id} className="flex gap-3 p-3 rounded-lg bg-muted/50">
+                          <div 
+                            key={activity.id} 
+                            className="flex gap-3 p-3 rounded-lg bg-muted/50 group cursor-pointer hover:bg-muted transition-colors"
+                            onClick={() => handleEditActivity(activity)}
+                          >
                             <Activity className="w-4 h-4 mt-0.5 text-primary" />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
@@ -162,11 +219,24 @@ export function ItineraryDetail({ itinerary, onBack, onEdit, onDelete }: Itinera
                                 <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
                               )}
                             </div>
-                            {activity.cost && (
-                              <span className="text-sm text-muted-foreground">
-                                {activity.currency || itinerary.currency || '$'}{activity.cost}
-                              </span>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {activity.cost && (
+                                <span className="text-sm text-muted-foreground">
+                                  {activity.currency || itinerary.currency || '$'}{activity.cost}
+                                </span>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDeleteActivity(activity.id);
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -272,6 +342,16 @@ export function ItineraryDetail({ itinerary, onBack, onEdit, onDelete }: Itinera
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Activity Form */}
+      <ActivityForm
+        open={activityFormOpen}
+        onOpenChange={setActivityFormOpen}
+        onSubmit={handleActivitySubmit}
+        initialData={editingActivity}
+        selectedDate={selectedDate}
+        currency={itinerary.currency}
+      />
     </div>
   );
 }
