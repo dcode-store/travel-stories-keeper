@@ -134,7 +134,7 @@ export function ItineraryDetail({
         {/* Trip Header */}
         <div className="mb-8">
           <h1 className="font-display text-3xl font-medium mb-2">{itinerary.title}</h1>
-          <div className="flex items-center gap-4 text-muted-foreground mb-4">
+          <div className="flex flex-wrap items-center gap-4 text-muted-foreground mb-4">
             <span className="flex items-center gap-1">
               <MapPin className="w-4 h-4" />
               {itinerary.destination}
@@ -144,14 +144,14 @@ export function ItineraryDetail({
               {format(new Date(itinerary.startDate), 'MMM d')} - {format(new Date(itinerary.endDate), 'MMM d, yyyy')}
             </span>
             <span>{duration} days</span>
+            {itinerary.budget && (
+              <span className="flex items-center gap-1">
+                <DollarSign className="w-4 h-4" />
+                {itinerary.currency} {itinerary.budget.toLocaleString()}
+              </span>
+            )}
           </div>
           {itinerary.description && <p className="text-muted-foreground">{itinerary.description}</p>}
-          {itinerary.budget && (
-            <div className="flex items-center gap-1 mt-2 text-sm">
-              <DollarSign className="w-4 h-4" />
-              Budget: {itinerary.currency} {itinerary.budget.toLocaleString()}
-            </div>
-          )}
           {itinerary.tags && itinerary.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
               {itinerary.tags.map(tag => (
