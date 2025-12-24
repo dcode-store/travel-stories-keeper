@@ -577,45 +577,92 @@ export function AiTripPlanner({ onComplete, onCancel }: AiTripPlannerProps) {
                       </div>
                     </div>
 
-                    {/* Activity Suggestions */}
-                    <div className="flex items-center gap-2 mb-3 flex-shrink-0">
-                      <Lightbulb className="w-5 h-5 text-primary" />
-                      <h4 className="font-medium">Suggested Activities</h4>
-                      <span className="text-sm text-muted-foreground">({selectedActivities.size} selected)</span>
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 overflow-hidden">
+                      {/* Activity Suggestions */}
+                      <div className="flex flex-col overflow-hidden">
+                        <div className="flex items-center gap-2 mb-3 flex-shrink-0">
+                          <Lightbulb className="w-5 h-5 text-primary" />
+                          <h4 className="font-medium">Suggested Activities</h4>
+                        </div>
 
-                    <ScrollArea className="flex-1 -mx-2 px-2">
-                      <div className="space-y-2 pb-2">
-                        {suggestedActivities.map((activity) => (
-                          <button
-                            key={activity.name}
-                            onClick={() => toggleActivity(activity.name)}
-                            className={`w-full p-3 rounded-lg border-2 text-left transition-all flex items-start gap-3 ${
-                              selectedActivities.has(activity.name)
-                                ? 'border-primary bg-primary/5'
-                                : 'border-border hover:border-primary/30'
-                            }`}
-                          >
-                            <Checkbox 
-                              checked={selectedActivities.has(activity.name)}
-                              className="mt-0.5"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-sm">{activity.name}</span>
-                                <Badge variant="outline" className="text-xs capitalize">
-                                  {activity.timeOfDay}
-                                </Badge>
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-0.5">{activity.description}</p>
-                            </div>
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">
-                              {TRIP_THEMES[activity.theme]?.icon}
-                            </span>
-                          </button>
-                        ))}
+                        <ScrollArea className="flex-1 -mx-2 px-2">
+                          <div className="space-y-2 pb-2">
+                            {suggestedActivities.filter(a => !selectedActivities.has(a.name)).map((activity) => (
+                              <button
+                                key={activity.name}
+                                onClick={() => toggleActivity(activity.name)}
+                                className="w-full p-3 rounded-lg border-2 text-left transition-all flex items-start gap-3 border-border hover:border-primary/30 hover:bg-primary/5"
+                              >
+                                <div className="p-1 rounded bg-primary/10 text-primary">
+                                  <ArrowRight className="w-3 h-3" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-sm">{activity.name}</span>
+                                    <Badge variant="outline" className="text-xs capitalize">
+                                      {activity.timeOfDay}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-0.5">{activity.description}</p>
+                                </div>
+                                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                  {TRIP_THEMES[activity.theme]?.icon}
+                                </span>
+                              </button>
+                            ))}
+                            {suggestedActivities.filter(a => !selectedActivities.has(a.name)).length === 0 && (
+                              <p className="text-sm text-muted-foreground text-center py-4">All activities added to your schedule!</p>
+                            )}
+                          </div>
+                        </ScrollArea>
                       </div>
-                    </ScrollArea>
+
+                      {/* Your Schedule */}
+                      <div className="flex flex-col overflow-hidden">
+                        <div className="flex items-center gap-2 mb-3 flex-shrink-0">
+                          <Check className="w-5 h-5 text-primary" />
+                          <h4 className="font-medium">Your Schedule</h4>
+                          <span className="text-sm text-muted-foreground">({selectedActivities.size})</span>
+                        </div>
+
+                        <ScrollArea className="flex-1 -mx-2 px-2">
+                          <div className="space-y-2 pb-2">
+                            <AnimatePresence mode="popLayout">
+                              {suggestedActivities.filter(a => selectedActivities.has(a.name)).map((activity) => (
+                                <motion.button
+                                  key={activity.name}
+                                  initial={{ opacity: 0, scale: 0.9, x: -20 }}
+                                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                                  exit={{ opacity: 0, scale: 0.9, x: 20 }}
+                                  layout
+                                  onClick={() => toggleActivity(activity.name)}
+                                  className="w-full p-3 rounded-lg border-2 text-left transition-all flex items-start gap-3 border-primary bg-primary/5 hover:bg-primary/10"
+                                >
+                                  <div className="p-1 rounded bg-destructive/10 text-destructive">
+                                    <ArrowLeft className="w-3 h-3" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium text-sm">{activity.name}</span>
+                                      <Badge variant="outline" className="text-xs capitalize">
+                                        {activity.timeOfDay}
+                                      </Badge>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-0.5">{activity.description}</p>
+                                  </div>
+                                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                    {TRIP_THEMES[activity.theme]?.icon}
+                                  </span>
+                                </motion.button>
+                              ))}
+                            </AnimatePresence>
+                            {selectedActivities.size === 0 && (
+                              <p className="text-sm text-muted-foreground text-center py-4">Click activities to add them here</p>
+                            )}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    </div>
 
                     {answers.interests && (
                       <div className="mt-3 p-3 rounded-lg bg-muted/30 flex-shrink-0">
