@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { Memory, MemoryFormData, MOOD_OPTIONS } from '@/types/memory';
-import { X, Plus, ImagePlus, Video, MapPin, Tag, ChevronDown } from 'lucide-react';
+import { X, Plus, ImagePlus, ArrowLeft, ArrowRight, Check, MapPin, Tag, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface MemoryFormProps {
   open: boolean;
@@ -16,6 +16,16 @@ interface MemoryFormProps {
   onSubmit: (data: MemoryFormData) => void;
   initialData?: Memory;
 }
+
+const STEPS = [
+  { id: 'title', label: 'Title', question: 'What would you call this memory?' },
+  { id: 'date', label: 'Date', question: 'When did this happen?' },
+  { id: 'content', label: 'Story', question: 'Tell the story of this moment...' },
+  { id: 'photos', label: 'Photos', question: 'Add some photos (optional)' },
+  { id: 'location', label: 'Location', question: 'Where did this take place?' },
+  { id: 'mood', label: 'Mood', question: 'How were you feeling?' },
+  { id: 'extras', label: 'Extras', question: 'Any tags or video to add?' },
+];
 
 const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.7): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -49,6 +59,7 @@ const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.7
 
 export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: MemoryFormProps) {
   const { toast } = useToast();
+  const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<MemoryFormData>({
     title: '',
     date: new Date().toISOString().split('T')[0],
@@ -61,37 +72,35 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
   });
   const [tagInput, setTagInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
-  const [showSecondary, setShowSecondary] = useState(false);
 
   useEffect(() => {
-    if (initialData) {
-      setFormData({
-        title: initialData.title,
-        date: initialData.date,
-        content: initialData.content,
-        images: initialData.images,
-        videoUrl: initialData.videoUrl || '',
-        location: initialData.location || '',
-        tags: initialData.tags || [],
-        mood: initialData.mood || '',
-      });
-      setShowSecondary(
-        !!(initialData.mood || initialData.tags?.length || initialData.videoUrl)
-      );
-    } else {
-      setFormData({
-        title: '',
-        date: new Date().toISOString().split('T')[0],
-        content: '',
-        images: [],
-        videoUrl: '',
-        location: '',
-        tags: [],
-        mood: '',
-      });
-      setShowSecondary(false);
+    if (open) {
+      if (initialData) {
+        setFormData({
+          title: initialData.title,
+          date: initialData.date,
+          content: initialData.content,
+          images: initialData.images,
+          videoUrl: initialData.videoUrl || '',
+          location: initialData.location || '',
+          tags: initialData.tags || [],
+          mood: initialData.mood || '',
+        });
+      } else {
+        setFormData({
+          title: '',
+          date: new Date().toISOString().split('T')[0],
+          content: '',
+          images: [],
+          videoUrl: '',
+          location: '',
+          tags: [],
+          mood: '',
+        });
+      }
+      setCurrentStep(0);
+      setTagInput('');
     }
-    setTagInput('');
   }, [initialData, open]);
 
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,8 +140,34 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
     setFormData(prev => ({ ...prev, tags: prev.tags?.filter(t => t !== tag) || [] }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const canProceed = () => {
+    switch (STEPS[currentStep].id) {
+      case 'title':
+        return formData.title.trim().length > 0;
+      case 'date':
+        return formData.date.length > 0;
+      case 'content':
+        return formData.content.trim().length > 0;
+      default:
+        return true;
+    }
+  };
+
+  const handleNext = () => {
+    if (currentStep < STEPS.length - 1) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      handleSubmit();
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+    }
+  };
+
+  const handleSubmit = () => {
     if (!formData.title.trim() || !formData.content.trim()) {
       toast({ title: 'Missing required fields', description: 'Please fill in the title and content.', variant: 'destructive' });
       return;
@@ -141,173 +176,238 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
     onOpenChange(false);
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="font-display text-2xl">
-            {initialData ? 'Edit Memory' : 'Add New Memory'}
-          </DialogTitle>
-        </DialogHeader>
+  const progress = ((currentStep + 1) / STEPS.length) * 100;
+  const step = STEPS[currentStep];
 
-        <form onSubmit={handleSubmit} className="space-y-6 pt-4">
-          {/* PRIMARY FIELDS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="A moment to remember..."
-                className="font-display"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="date">Date *</Label>
-              <Input
-                id="date"
-                type="date"
-                value={formData.date}
-                onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
-              />
-            </div>
+  const renderStepContent = () => {
+    switch (step.id) {
+      case 'title':
+        return (
+          <div className="space-y-4">
+            <Input
+              value={formData.title}
+              onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="A moment to remember..."
+              className="text-lg font-display h-14"
+              autoFocus
+            />
           </div>
+        );
 
-          <div className="space-y-2">
-            <Label htmlFor="content">Your Story *</Label>
+      case 'date':
+        return (
+          <div className="space-y-4">
+            <Input
+              type="date"
+              value={formData.date}
+              onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
+              className="h-14 text-lg"
+            />
+          </div>
+        );
+
+      case 'content':
+        return (
+          <div className="space-y-4">
             <Textarea
-              id="content"
               value={formData.content}
               onChange={e => setFormData(prev => ({ ...prev, content: e.target.value }))}
               placeholder="Write about this memory..."
-              className="min-h-[120px] resize-none"
+              className="min-h-[180px] resize-none text-base"
+              autoFocus
             />
           </div>
+        );
 
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <ImagePlus className="w-4 h-4" /> Photos
-            </Label>
-            <div className="flex flex-wrap gap-2">
+      case 'photos':
+        return (
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-3">
               {formData.images.map((img, i) => (
                 <div key={i} className="relative group">
-                  <img src={img} alt={`Upload ${i + 1}`} className="w-20 h-20 object-cover rounded-lg" />
+                  <img src={img} alt={`Upload ${i + 1}`} className="w-24 h-24 object-cover rounded-xl" />
                   <button
                     type="button"
                     onClick={() => removeImage(i)}
-                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <X className="w-3 h-3" />
                   </button>
                 </div>
               ))}
-              <label className="w-20 h-20 border-2 border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
+              <label className="w-24 h-24 border-2 border-dashed border-muted-foreground/30 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all">
                 <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={isUploading} />
                 {isUploading ? (
-                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <Plus className="w-6 h-6 text-muted-foreground" />
+                  <>
+                    <ImagePlus className="w-6 h-6 text-muted-foreground mb-1" />
+                    <span className="text-xs text-muted-foreground">Add</span>
+                  </>
                 )}
               </label>
             </div>
           </div>
+        );
 
-          <div className="space-y-2">
-            <Label htmlFor="location" className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" /> Location
-            </Label>
-            <Input
-              id="location"
-              value={formData.location}
-              onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
-              placeholder="Where did this happen?"
-            />
+      case 'location':
+        return (
+          <div className="space-y-4">
+            <div className="relative">
+              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                value={formData.location}
+                onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                placeholder="Paris, France"
+                className="pl-12 h-14 text-lg"
+              />
+            </div>
           </div>
+        );
 
-          {/* SECONDARY FIELDS */}
-          <Collapsible open={showSecondary} onOpenChange={setShowSecondary}>
-            <CollapsibleTrigger asChild>
-              <Button type="button" variant="ghost" className="w-full justify-between text-muted-foreground hover:text-foreground">
-                <span className="flex items-center gap-2">
-                  <Plus className="w-4 h-4" /> More details (mood, tags, video)
-                </span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${showSecondary ? 'rotate-180' : ''}`} />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-5 pt-4">
+      case 'mood':
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              {MOOD_OPTIONS.map(mood => (
+                <button
+                  key={mood.value}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, mood: prev.mood === mood.value ? '' : mood.value }))}
+                  className={`px-4 py-3 rounded-xl text-left transition-all ${
+                    formData.mood === mood.value 
+                      ? 'ring-2 ring-primary ring-offset-2 bg-primary/10' 
+                      : 'bg-muted hover:bg-muted/80'
+                  }`}
+                >
+                  <span className="text-lg">{mood.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        );
 
-              <div className="space-y-2">
-                <Label>How were you feeling?</Label>
+      case 'extras':
+        return (
+          <div className="space-y-6">
+            {/* Tags */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Tag className="w-4 h-4" />
+                Tags
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={tagInput}
+                  onChange={e => setTagInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  placeholder="Add a tag..."
+                  className="flex-1"
+                />
+                <Button type="button" variant="outline" size="icon" onClick={addTag}>
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              {formData.tags && formData.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {MOOD_OPTIONS.map(mood => (
-                    <button
-                      key={mood.value}
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, mood: prev.mood === mood.value ? '' : mood.value }))}
-                      className={`px-3 py-1.5 rounded-full text-sm transition-all ${
-                        formData.mood === mood.value ? 'ring-2 ring-primary ring-offset-2 bg-primary/10' : 'bg-muted hover:bg-muted/80'
-                      }`}
-                    >
-                      {mood.label}
-                    </button>
+                  {formData.tags.map(tag => (
+                    <Badge key={tag} variant="secondary" className="gap-1 py-1">
+                      #{tag}
+                      <button type="button" onClick={() => removeTag(tag)} className="hover:text-destructive ml-1">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
                   ))}
                 </div>
-              </div>
+              )}
+            </div>
 
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Tag className="w-4 h-4" /> Tags
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={tagInput}
-                    onChange={e => setTagInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                    placeholder="Add a tag..."
-                    className="flex-1"
-                  />
-                  <Button type="button" variant="outline" size="icon" onClick={addTag}>
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-                {formData.tags && formData.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {formData.tags.map(tag => (
-                      <Badge key={tag} variant="secondary" className="gap-1">
-                        {tag}
-                        <button type="button" onClick={() => removeTag(tag)} className="hover:text-destructive">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
+            {/* Video */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Video className="w-4 h-4" />
+                Video URL
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="videoUrl" className="flex items-center gap-2">
-                  <Video className="w-4 h-4" /> Video URL
-                </Label>
-                <Input
-                  id="videoUrl"
-                  value={formData.videoUrl}
-                  onChange={e => setFormData(prev => ({ ...prev, videoUrl: e.target.value }))}
-                  placeholder="https://youtube.com/... or direct video URL"
-                />
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isUploading}>
-              {initialData ? 'Save Changes' : 'Add Memory'}
-            </Button>
+              <Input
+                value={formData.videoUrl}
+                onChange={e => setFormData(prev => ({ ...prev, videoUrl: e.target.value }))}
+                placeholder="https://youtube.com/..."
+              />
+            </div>
           </div>
-        </form>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden">
+        {/* Progress */}
+        <div className="px-6 pt-6">
+          <Progress value={progress} className="h-1.5" />
+          <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+            <span>Step {currentStep + 1} of {STEPS.length}</span>
+            <span>{step.label}</span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 min-h-[320px]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step.id}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+            >
+              <h2 className="text-xl font-display font-medium mb-6">
+                {step.question}
+              </h2>
+              {renderStepContent()}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Navigation */}
+        <div className="flex items-center justify-between p-6 pt-0">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={currentStep === 0 ? () => onOpenChange(false) : handleBack}
+            className="gap-2"
+          >
+            {currentStep === 0 ? (
+              'Cancel'
+            ) : (
+              <>
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </>
+            )}
+          </Button>
+
+          <Button
+            onClick={handleNext}
+            disabled={!canProceed() || isUploading}
+            className="gap-2"
+          >
+            {currentStep === STEPS.length - 1 ? (
+              <>
+                <Check className="w-4 h-4" />
+                {initialData ? 'Save Changes' : 'Create Memory'}
+              </>
+            ) : (
+              <>
+                {STEPS[currentStep].id === 'photos' || STEPS[currentStep].id === 'location' || STEPS[currentStep].id === 'mood' ? 'Skip' : 'Next'}
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
