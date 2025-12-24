@@ -34,6 +34,7 @@ interface SuggestedActivity {
   theme: TripTheme;
   timeOfDay: 'morning' | 'afternoon' | 'evening';
   duration: string;
+  location?: string;
 }
 
 const BUDGET_OPTIONS = [
@@ -96,6 +97,95 @@ const ACTIVITY_TEMPLATES: Record<TripTheme, SuggestedActivity[]> = {
   ],
 };
 
+// Destination-specific activity templates
+const DESTINATION_ACTIVITIES: Record<string, SuggestedActivity[]> = {
+  tokyo: [
+    { name: 'Senso-ji Temple visit', description: 'Explore Tokyo\'s oldest and most famous temple in Asakusa', theme: 'cultural', timeOfDay: 'morning', duration: '2 hours', location: 'Asakusa, Tokyo' },
+    { name: 'Shibuya Crossing experience', description: 'Walk the world\'s busiest intersection', theme: 'city', timeOfDay: 'afternoon', duration: '1 hour', location: 'Shibuya, Tokyo' },
+    { name: 'Tsukiji Outer Market food tour', description: 'Fresh sushi and Japanese street food', theme: 'city', timeOfDay: 'morning', duration: '2-3 hours', location: 'Tsukiji, Tokyo' },
+    { name: 'TeamLab Borderless', description: 'Immersive digital art museum experience', theme: 'cultural', timeOfDay: 'afternoon', duration: '2-3 hours', location: 'Odaiba, Tokyo' },
+    { name: 'Golden Gai bar hopping', description: 'Explore tiny bars in this historic alley', theme: 'city', timeOfDay: 'evening', duration: '3 hours', location: 'Shinjuku, Tokyo' },
+    { name: 'Meiji Shrine morning walk', description: 'Peaceful shrine in the heart of Tokyo', theme: 'nature', timeOfDay: 'morning', duration: '1-2 hours', location: 'Harajuku, Tokyo' },
+    { name: 'Ramen tasting adventure', description: 'Try different regional ramen styles', theme: 'city', timeOfDay: 'evening', duration: '2 hours', location: 'Various, Tokyo' },
+    { name: 'Harajuku fashion district', description: 'Experience unique Japanese street fashion', theme: 'city', timeOfDay: 'afternoon', duration: '2-3 hours', location: 'Harajuku, Tokyo' },
+  ],
+  paris: [
+    { name: 'Eiffel Tower at sunrise', description: 'Beat the crowds with an early morning visit', theme: 'cultural', timeOfDay: 'morning', duration: '2 hours', location: 'Champ de Mars, Paris' },
+    { name: 'Louvre Museum exploration', description: 'See the Mona Lisa and thousands of masterpieces', theme: 'cultural', timeOfDay: 'morning', duration: '4 hours', location: 'Louvre, Paris' },
+    { name: 'Montmartre walking tour', description: 'Bohemian neighborhood with Sacré-Cœur views', theme: 'cultural', timeOfDay: 'afternoon', duration: '3 hours', location: 'Montmartre, Paris' },
+    { name: 'Seine River sunset cruise', description: 'Romantic boat ride past illuminated landmarks', theme: 'romantic', timeOfDay: 'evening', duration: '2 hours', location: 'Seine River, Paris' },
+    { name: 'Le Marais food & wine tour', description: 'French pastries, cheese, and wine tasting', theme: 'city', timeOfDay: 'afternoon', duration: '3 hours', location: 'Le Marais, Paris' },
+    { name: 'Versailles day trip', description: 'Explore the opulent palace and gardens', theme: 'cultural', timeOfDay: 'morning', duration: '6 hours', location: 'Versailles' },
+    { name: 'Café culture experience', description: 'Leisurely coffee at historic Parisian cafés', theme: 'relaxation', timeOfDay: 'afternoon', duration: '2 hours', location: 'Saint-Germain, Paris' },
+    { name: 'Moulin Rouge show', description: 'Classic Parisian cabaret experience', theme: 'cultural', timeOfDay: 'evening', duration: '3 hours', location: 'Pigalle, Paris' },
+  ],
+  'new york': [
+    { name: 'Central Park morning jog', description: 'Start your day in Manhattan\'s green oasis', theme: 'nature', timeOfDay: 'morning', duration: '1-2 hours', location: 'Central Park, NYC' },
+    { name: 'Statue of Liberty & Ellis Island', description: 'Iconic American landmark visit', theme: 'cultural', timeOfDay: 'morning', duration: '4 hours', location: 'Liberty Island, NYC' },
+    { name: 'Broadway show', description: 'World-class theater experience', theme: 'cultural', timeOfDay: 'evening', duration: '3 hours', location: 'Times Square, NYC' },
+    { name: 'High Line walk', description: 'Elevated park with city views and art', theme: 'city', timeOfDay: 'afternoon', duration: '2 hours', location: 'Chelsea, NYC' },
+    { name: 'Brooklyn pizza tour', description: 'Taste legendary NYC pizza spots', theme: 'city', timeOfDay: 'afternoon', duration: '3 hours', location: 'Brooklyn, NYC' },
+    { name: 'Top of the Rock sunset', description: 'Panoramic views of Manhattan skyline', theme: 'city', timeOfDay: 'evening', duration: '1-2 hours', location: 'Rockefeller Center, NYC' },
+    { name: 'MoMA or Met Museum', description: 'World-renowned art collections', theme: 'cultural', timeOfDay: 'afternoon', duration: '3-4 hours', location: 'Manhattan, NYC' },
+    { name: 'Speakeasy bar crawl', description: 'Hidden cocktail bars with 1920s vibes', theme: 'city', timeOfDay: 'evening', duration: '3 hours', location: 'Various, NYC' },
+  ],
+  london: [
+    { name: 'Tower of London tour', description: 'See the Crown Jewels and historic fortress', theme: 'cultural', timeOfDay: 'morning', duration: '3 hours', location: 'Tower of London' },
+    { name: 'Borough Market food tour', description: 'London\'s premier food market experience', theme: 'city', timeOfDay: 'morning', duration: '2-3 hours', location: 'Southwark, London' },
+    { name: 'British Museum exploration', description: 'Free world-class museum with ancient artifacts', theme: 'cultural', timeOfDay: 'afternoon', duration: '3-4 hours', location: 'Bloomsbury, London' },
+    { name: 'West End theatre show', description: 'World-famous London theatre district', theme: 'cultural', timeOfDay: 'evening', duration: '3 hours', location: 'West End, London' },
+    { name: 'Camden Market adventure', description: 'Eclectic market with food, fashion, and music', theme: 'city', timeOfDay: 'afternoon', duration: '3 hours', location: 'Camden, London' },
+    { name: 'Thames River cruise', description: 'See London\'s landmarks from the water', theme: 'city', timeOfDay: 'afternoon', duration: '1-2 hours', location: 'Thames River' },
+    { name: 'Afternoon tea experience', description: 'Traditional British afternoon tea', theme: 'relaxation', timeOfDay: 'afternoon', duration: '2 hours', location: 'Various, London' },
+    { name: 'Pub crawl in Shoreditch', description: 'Trendy East London nightlife', theme: 'city', timeOfDay: 'evening', duration: '3-4 hours', location: 'Shoreditch, London' },
+  ],
+  rome: [
+    { name: 'Colosseum & Roman Forum', description: 'Walk through ancient Roman history', theme: 'cultural', timeOfDay: 'morning', duration: '4 hours', location: 'Colosseum, Rome' },
+    { name: 'Vatican Museums & Sistine Chapel', description: 'Michelangelo\'s masterpiece and papal treasures', theme: 'cultural', timeOfDay: 'morning', duration: '4-5 hours', location: 'Vatican City' },
+    { name: 'Trastevere food tour', description: 'Authentic Roman cuisine in charming neighborhood', theme: 'city', timeOfDay: 'evening', duration: '3 hours', location: 'Trastevere, Rome' },
+    { name: 'Trevi Fountain & Spanish Steps', description: 'Iconic Roman landmarks stroll', theme: 'cultural', timeOfDay: 'afternoon', duration: '2 hours', location: 'Centro Storico, Rome' },
+    { name: 'Gelato tasting tour', description: 'Sample the best artisan gelato in Rome', theme: 'city', timeOfDay: 'afternoon', duration: '2 hours', location: 'Various, Rome' },
+    { name: 'Aperitivo in Campo de\' Fiori', description: 'Evening drinks in a lively Roman square', theme: 'relaxation', timeOfDay: 'evening', duration: '2 hours', location: 'Campo de\' Fiori, Rome' },
+  ],
+  barcelona: [
+    { name: 'Sagrada Familia visit', description: 'Gaudí\'s unfinished masterpiece basilica', theme: 'cultural', timeOfDay: 'morning', duration: '2-3 hours', location: 'Eixample, Barcelona' },
+    { name: 'Park Güell exploration', description: 'Whimsical park with mosaic art and city views', theme: 'nature', timeOfDay: 'morning', duration: '2 hours', location: 'Gràcia, Barcelona' },
+    { name: 'La Boqueria market tour', description: 'Vibrant food market on Las Ramblas', theme: 'city', timeOfDay: 'morning', duration: '2 hours', location: 'Las Ramblas, Barcelona' },
+    { name: 'Gothic Quarter walking tour', description: 'Medieval streets and hidden plazas', theme: 'cultural', timeOfDay: 'afternoon', duration: '2-3 hours', location: 'Gothic Quarter, Barcelona' },
+    { name: 'Barceloneta Beach day', description: 'Mediterranean beach and seafood', theme: 'beach', timeOfDay: 'afternoon', duration: '4 hours', location: 'Barceloneta, Barcelona' },
+    { name: 'Flamenco show & tapas', description: 'Traditional Spanish performance with dinner', theme: 'cultural', timeOfDay: 'evening', duration: '3 hours', location: 'El Born, Barcelona' },
+  ],
+  bali: [
+    { name: 'Tegallalang Rice Terraces', description: 'Stunning UNESCO rice terrace landscapes', theme: 'nature', timeOfDay: 'morning', duration: '2-3 hours', location: 'Ubud, Bali' },
+    { name: 'Uluwatu Temple sunset', description: 'Clifftop temple with Kecak fire dance', theme: 'cultural', timeOfDay: 'evening', duration: '3 hours', location: 'Uluwatu, Bali' },
+    { name: 'Ubud Monkey Forest', description: 'Sacred sanctuary with playful monkeys', theme: 'nature', timeOfDay: 'morning', duration: '2 hours', location: 'Ubud, Bali' },
+    { name: 'Balinese spa treatment', description: 'Traditional massage and flower bath', theme: 'relaxation', timeOfDay: 'afternoon', duration: '2-3 hours', location: 'Various, Bali' },
+    { name: 'Seminyak beach club', description: 'Trendy beach club with pool and DJ', theme: 'beach', timeOfDay: 'afternoon', duration: '4-5 hours', location: 'Seminyak, Bali' },
+    { name: 'Sunrise Mount Batur hike', description: 'Trek active volcano for stunning sunrise', theme: 'adventure', timeOfDay: 'morning', duration: '5-6 hours', location: 'Kintamani, Bali' },
+    { name: 'Cooking class in Ubud', description: 'Learn traditional Balinese recipes', theme: 'cultural', timeOfDay: 'afternoon', duration: '4 hours', location: 'Ubud, Bali' },
+  ],
+  dubai: [
+    { name: 'Burj Khalifa observation deck', description: 'Views from the world\'s tallest building', theme: 'city', timeOfDay: 'evening', duration: '2 hours', location: 'Downtown Dubai' },
+    { name: 'Desert safari adventure', description: 'Dune bashing, camel rides, and BBQ dinner', theme: 'adventure', timeOfDay: 'afternoon', duration: '6 hours', location: 'Dubai Desert' },
+    { name: 'Dubai Mall & Fountain show', description: 'World\'s largest mall and dancing fountains', theme: 'city', timeOfDay: 'evening', duration: '3-4 hours', location: 'Downtown Dubai' },
+    { name: 'Old Dubai walking tour', description: 'Gold Souk, Spice Souk, and heritage area', theme: 'cultural', timeOfDay: 'morning', duration: '3 hours', location: 'Deira, Dubai' },
+    { name: 'Palm Jumeirah beach day', description: 'Luxury beach clubs on the iconic palm', theme: 'beach', timeOfDay: 'afternoon', duration: '4-5 hours', location: 'Palm Jumeirah, Dubai' },
+    { name: 'Dhow cruise dinner', description: 'Traditional boat cruise with dinner buffet', theme: 'romantic', timeOfDay: 'evening', duration: '2-3 hours', location: 'Dubai Marina' },
+  ],
+};
+
+// Helper to match destination to templates
+function getDestinationKey(destination: string): string | null {
+  const normalized = destination.toLowerCase().trim();
+  const keys = Object.keys(DESTINATION_ACTIVITIES);
+  
+  for (const key of keys) {
+    if (normalized.includes(key) || key.includes(normalized)) {
+      return key;
+    }
+  }
+  return null;
+}
 export function AiTripPlanner({ onComplete, onCancel }: AiTripPlannerProps) {
   const [currentStep, setCurrentStep] = useState<Step>('destination');
   const [answers, setAnswers] = useState<Partial<TripAnswers>>({
@@ -109,15 +199,35 @@ export function AiTripPlanner({ onComplete, onCancel }: AiTripPlannerProps) {
   const currentIndex = steps.indexOf(currentStep);
   const progress = ((currentIndex) / (steps.length - 1)) * 100;
 
-  // Generate suggested activities based on selected themes
+  // Generate suggested activities based on destination and themes
   const suggestedActivities = useMemo(() => {
     const activities: SuggestedActivity[] = [];
-    (answers.themes || []).forEach(theme => {
-      const themeActivities = ACTIVITY_TEMPLATES[theme] || [];
-      activities.push(...themeActivities.slice(0, 3));
-    });
+    
+    // First, check for destination-specific activities
+    const destKey = answers.destination ? getDestinationKey(answers.destination) : null;
+    if (destKey) {
+      const destActivities = DESTINATION_ACTIVITIES[destKey] || [];
+      // Filter by selected themes if any, otherwise include all
+      const filteredDest = answers.themes?.length 
+        ? destActivities.filter(a => answers.themes?.includes(a.theme))
+        : destActivities;
+      activities.push(...filteredDest.slice(0, 8));
+    }
+    
+    // Then add generic theme activities if we don't have enough
+    if (activities.length < 6) {
+      (answers.themes || []).forEach(theme => {
+        const themeActivities = ACTIVITY_TEMPLATES[theme] || [];
+        // Avoid duplicates based on name
+        const newActivities = themeActivities.filter(a => 
+          !activities.some(existing => existing.name === a.name)
+        );
+        activities.push(...newActivities.slice(0, 3));
+      });
+    }
+    
     return activities;
-  }, [answers.themes]);
+  }, [answers.destination, answers.themes]);
 
   const canProceed = () => {
     switch (currentStep) {
@@ -179,7 +289,7 @@ export function AiTripPlanner({ onComplete, onCancel }: AiTripPlannerProps) {
         description: suggestion.description,
         date: format(activityDate, 'yyyy-MM-dd'),
         time: timeMap[suggestion.timeOfDay],
-        location: answers.destination!,
+        location: suggestion.location || answers.destination!,
       });
       
       if ((index + 1) % 2 === 0) dayIndex++;

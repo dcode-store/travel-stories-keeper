@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, DragEvent } from 'react';
 import { Itinerary, Activity as ActivityType, Accommodation, Transportation, getItineraryDates, getActivitiesForDate, TRANSPORTATION_TYPES, calculateDuration } from '@/types/itinerary';
 import { ActivityForm } from './ActivityForm';
 import { AccommodationForm } from './AccommodationForm';
@@ -19,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ArrowLeft, Pencil, Trash2, MapPin, Calendar, Clock, DollarSign, Hotel, Plane, Activity, Plus, ChevronDown, Phone, Mail, Globe, ExternalLink, Moon, Link, Ticket, ClipboardCheck, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, MapPin, Calendar, Clock, DollarSign, Hotel, Plane, Activity, Plus, ChevronDown, Phone, Mail, Globe, ExternalLink, Moon, Link, Ticket, ClipboardCheck, ArrowRight, GripVertical } from 'lucide-react';
 import { format, isToday, isPast, startOfDay, differenceInDays, isWithinInterval } from 'date-fns';
 
 interface ItineraryDetailProps {
@@ -60,6 +60,8 @@ export function ItineraryDetail({
   const [editingActivity, setEditingActivity] = useState<ActivityType | undefined>();
   const [selectedDate, setSelectedDate] = useState<string | undefined>();
   const [showPastDays, setShowPastDays] = useState(false);
+  const [draggedActivityId, setDraggedActivityId] = useState<string | null>(null);
+  const [dragOverDate, setDragOverDate] = useState<string | null>(null);
   
   // Accommodation form state
   const [accommodationFormOpen, setAccommodationFormOpen] = useState(false);
@@ -68,6 +70,37 @@ export function ItineraryDetail({
   // Transport form state
   const [transportFormOpen, setTransportFormOpen] = useState(false);
   const [editingTransport, setEditingTransport] = useState<Transportation | undefined>();
+
+  // Drag and drop handlers
+  const handleDragStart = (activityId: string) => {
+    setDraggedActivityId(activityId);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedActivityId(null);
+    setDragOverDate(null);
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>, date: string) => {
+    e.preventDefault();
+    setDragOverDate(date);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverDate(null);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>, targetDate: string) => {
+    e.preventDefault();
+    if (draggedActivityId) {
+      const activity = itinerary.activities.find(a => a.id === draggedActivityId);
+      if (activity && activity.date !== targetDate) {
+        onUpdateActivity(draggedActivityId, { date: targetDate });
+      }
+    }
+    setDraggedActivityId(null);
+    setDragOverDate(null);
+  };
 
   // Determine if this is an ongoing trip (started but not ended)
   const today = startOfDay(new Date());
@@ -282,6 +315,13 @@ export function ItineraryDetail({
                       onAddActivity={handleAddActivity}
                       onEditActivity={handleEditActivity}
                       onDeleteActivity={onDeleteActivity}
+                      onDragStart={handleDragStart}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      isDragOver={dragOverDate === date}
+                      isDragging={!!draggedActivityId}
                     />
                   ))}
                 </CollapsibleContent>
@@ -303,6 +343,13 @@ export function ItineraryDetail({
                   onAddActivity={handleAddActivity}
                   onEditActivity={handleEditActivity}
                   onDeleteActivity={onDeleteActivity}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  isDragOver={dragOverDate === date}
+                  isDragging={!!draggedActivityId}
                 />
               );
             })}
@@ -899,6 +946,13 @@ interface DayCardProps {
   onAddActivity: (date: string) => void;
   onEditActivity: (activity: ActivityType) => void;
   onDeleteActivity: (activityId: string) => void;
+  onDragStart: (activityId: string) => void;
+  onDragEnd: () => void;
+  onDragOver: (e: DragEvent<HTMLDivElement>, date: string) => void;
+  onDragLeave: () => void;
+  onDrop: (e: DragEvent<HTMLDivElement>, targetDate: string) => void;
+  isDragOver: boolean;
+  isDragging: boolean;
 }
 
 function DayCard({
@@ -911,11 +965,25 @@ function DayCard({
   onAddActivity,
   onEditActivity,
   onDeleteActivity,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  isDragOver,
+  isDragging,
 }: DayCardProps) {
   const isEmpty = activities.length === 0;
   
   return (
-    <Card className={`group ${isPastDay ? 'opacity-60' : isToday ? 'ring-2 ring-primary/50' : ''}`}>
+    <Card 
+      className={`group transition-all ${isPastDay ? 'opacity-60' : isToday ? 'ring-2 ring-primary/50' : ''} ${
+        isDragOver ? 'ring-2 ring-primary bg-primary/5' : ''
+      } ${isDragging ? 'border-dashed' : ''}`}
+      onDragOver={(e) => onDragOver(e, date)}
+      onDragLeave={onDragLeave}
+      onDrop={(e) => onDrop(e, date)}
+    >
       <CardHeader className={`pb-3 ${isEmpty && !isPastDay ? 'py-4' : ''}`}>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-3 text-lg">
@@ -942,19 +1010,29 @@ function DayCard({
           )}
         </CardTitle>
       </CardHeader>
-      {(activities.length > 0 || isPastDay) && (
+      {(activities.length > 0 || isPastDay || isDragOver) && (
         <CardContent>
-          {activities.length === 0 && isPastDay ? (
+          {activities.length === 0 && isPastDay && !isDragOver ? (
             <p className="text-sm text-muted-foreground py-2 text-center">No activities</p>
+          ) : activities.length === 0 && isDragOver ? (
+            <div className="py-6 text-center border-2 border-dashed border-primary/30 rounded-lg">
+              <p className="text-sm text-primary">Drop activity here</p>
+            </div>
           ) : (
             <div className="space-y-3">
               {activities.map(activity => (
                 <div 
-                  key={activity.id} 
-                  className="flex gap-3 p-3 rounded-lg bg-muted/50 group/activity cursor-pointer hover:bg-muted transition-colors"
+                  key={activity.id}
+                  draggable
+                  onDragStart={() => onDragStart(activity.id)}
+                  onDragEnd={onDragEnd}
+                  className="flex gap-3 p-3 rounded-lg bg-muted/50 group/activity cursor-grab hover:bg-muted transition-colors active:cursor-grabbing"
                   onClick={() => onEditActivity(activity)}
                 >
-                  <Activity className="w-4 h-4 mt-0.5 text-primary" />
+                  <div className="flex items-center">
+                    <GripVertical className="w-4 h-4 text-muted-foreground/50 mr-1" />
+                    <Activity className="w-4 h-4 text-primary" />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{activity.name}</span>
