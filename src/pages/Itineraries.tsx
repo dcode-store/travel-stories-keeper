@@ -27,6 +27,9 @@ const Itineraries = () => {
     addAccommodation,
     updateAccommodation,
     deleteAccommodation,
+    addTransportation,
+    updateTransportation,
+    deleteTransportation,
   } = useItineraries();
   const { toast } = useToast();
 
@@ -107,6 +110,18 @@ const Itineraries = () => {
         onDeleteAccommodation={(accId) => {
           deleteAccommodation(currentItinerary.id, accId);
           toast({ title: 'Stay deleted', description: 'The accommodation has been removed.' });
+        }}
+        onAddTransportation={(data) => {
+          addTransportation(currentItinerary.id, data);
+          toast({ title: 'Transport added', description: 'The transport has been added.' });
+        }}
+        onUpdateTransportation={(transportId, data) => {
+          updateTransportation(currentItinerary.id, transportId, data);
+          toast({ title: 'Transport updated', description: 'The transport has been saved.' });
+        }}
+        onDeleteTransportation={(transportId) => {
+          deleteTransportation(currentItinerary.id, transportId);
+          toast({ title: 'Transport deleted', description: 'The transport has been removed.' });
         }}
       />
     );

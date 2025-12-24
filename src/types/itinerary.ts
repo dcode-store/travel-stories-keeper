@@ -53,6 +53,12 @@ export interface Transportation {
     notes?: string;
     cost?: number;
     currency?: string;
+    // Booking links
+    bookingLink?: string;
+    confirmationLink?: string;
+    // Screenshots
+    bookingScreenshots?: string[];
+    confirmationScreenshots?: string[];
 }
 
 // Trip types
