@@ -18,7 +18,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ArrowLeft, Pencil, Trash2, MapPin, Calendar, Clock, DollarSign, Hotel, Plane, Activity, Plus, ChevronDown, Phone, Mail, Globe, ExternalLink, Moon } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, MapPin, Calendar, Clock, DollarSign, Hotel, Plane, Activity, Plus, ChevronDown, Phone, Mail, Globe, ExternalLink, Moon, Link, Ticket, ClipboardCheck } from 'lucide-react';
 import { format, isToday, isPast, startOfDay, differenceInDays, isWithinInterval } from 'date-fns';
 
 interface ItineraryDetailProps {
@@ -282,10 +282,62 @@ export function ItineraryDetail({
 
             {itinerary.accommodations.length === 0 ? (
               <Card>
-                <CardContent className="py-12 text-center">
+                <CardContent className="py-8 text-center">
                   <Hotel className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">No accommodations added yet</p>
-                  <p className="text-sm text-muted-foreground/70 mt-1">Add your hotels, Airbnbs, or other stays</p>
+                  <p className="text-muted-foreground mb-1">No accommodations added yet</p>
+                  <p className="text-sm text-muted-foreground/70 mb-6">Find your perfect stay or add one manually</p>
+                  
+                  {/* Booking Provider Links */}
+                  <div className="space-y-3">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Find accommodations on</p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <a 
+                        href={`https://www.booking.com/searchresults.html?ss=${encodeURIComponent(itinerary.destination)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm bg-[#003580] text-white rounded-md hover:bg-[#003580]/90 transition-colors"
+                      >
+                        Booking.com
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <a 
+                        href={`https://www.airbnb.com/s/${encodeURIComponent(itinerary.destination)}/homes`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm bg-[#FF5A5F] text-white rounded-md hover:bg-[#FF5A5F]/90 transition-colors"
+                      >
+                        Airbnb
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <a 
+                        href={`https://www.hotels.com/search.do?q-destination=${encodeURIComponent(itinerary.destination)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm bg-[#D32F2F] text-white rounded-md hover:bg-[#D32F2F]/90 transition-colors"
+                      >
+                        Hotels.com
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <a 
+                        href={`https://www.expedia.com/Hotel-Search?destination=${encodeURIComponent(itinerary.destination)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm bg-[#00355F] text-white rounded-md hover:bg-[#00355F]/90 transition-colors"
+                      >
+                        Expedia
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <a 
+                        href={`https://www.agoda.com/search?city=${encodeURIComponent(itinerary.destination)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm bg-[#5391D0] text-white rounded-md hover:bg-[#5391D0]/90 transition-colors"
+                      >
+                        Agoda
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             ) : (
@@ -375,7 +427,49 @@ export function ItineraryDetail({
                                             className="text-xs text-primary hover:underline flex items-center gap-1"
                                           >
                                             <Globe className="w-3 h-3" />
-                                            Website
+                                            Hotel Website
+                                            <ExternalLink className="w-2.5 h-2.5" />
+                                          </a>
+                                        )}
+                                      </div>
+                                    )}
+                                    
+                                    {/* Booking Links */}
+                                    {(acc.bookingLink || acc.confirmationLink || acc.ticketLink) && (
+                                      <div className="flex flex-wrap gap-3 mt-2 pt-2 border-t border-border/50">
+                                        {acc.bookingLink && (
+                                          <a 
+                                            href={acc.bookingLink} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-xs text-primary hover:underline flex items-center gap-1"
+                                          >
+                                            <Link className="w-3 h-3" />
+                                            Booking Details
+                                            <ExternalLink className="w-2.5 h-2.5" />
+                                          </a>
+                                        )}
+                                        {acc.confirmationLink && (
+                                          <a 
+                                            href={acc.confirmationLink} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-xs text-primary hover:underline flex items-center gap-1"
+                                          >
+                                            <ClipboardCheck className="w-3 h-3" />
+                                            Confirmation
+                                            <ExternalLink className="w-2.5 h-2.5" />
+                                          </a>
+                                        )}
+                                        {acc.ticketLink && (
+                                          <a 
+                                            href={acc.ticketLink} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-xs text-primary hover:underline flex items-center gap-1"
+                                          >
+                                            <Ticket className="w-3 h-3" />
+                                            E-Ticket/Voucher
                                             <ExternalLink className="w-2.5 h-2.5" />
                                           </a>
                                         )}

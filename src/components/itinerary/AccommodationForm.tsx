@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Hotel, MapPin, Calendar, Phone, Mail, Globe, DollarSign, FileText } from 'lucide-react';
+import { Hotel, MapPin, Calendar, Phone, Mail, Globe, DollarSign, FileText, Link, Ticket, ClipboardCheck } from 'lucide-react';
 
 interface AccommodationFormProps {
   open: boolean;
@@ -42,6 +42,9 @@ export function AccommodationForm({
     phone: '',
     email: '',
     website: '',
+    bookingLink: '',
+    confirmationLink: '',
+    ticketLink: '',
   });
 
   useEffect(() => {
@@ -57,6 +60,9 @@ export function AccommodationForm({
         phone: initialData.phone || '',
         email: initialData.email || '',
         website: initialData.website || '',
+        bookingLink: initialData.bookingLink || '',
+        confirmationLink: initialData.confirmationLink || '',
+        ticketLink: initialData.ticketLink || '',
       });
     } else {
       setFormData({
@@ -70,6 +76,9 @@ export function AccommodationForm({
         phone: '',
         email: '',
         website: '',
+        bookingLink: '',
+        confirmationLink: '',
+        ticketLink: '',
       });
     }
   }, [initialData, open, tripStartDate, tripEndDate]);
@@ -88,6 +97,9 @@ export function AccommodationForm({
       ...(formData.phone && { phone: formData.phone }),
       ...(formData.email && { email: formData.email }),
       ...(formData.website && { website: formData.website }),
+      ...(formData.bookingLink && { bookingLink: formData.bookingLink }),
+      ...(formData.confirmationLink && { confirmationLink: formData.confirmationLink }),
+      ...(formData.ticketLink && { ticketLink: formData.ticketLink }),
     };
 
     onSubmit(data);
@@ -230,6 +242,43 @@ export function AccommodationForm({
                   value={formData.website}
                   onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                   placeholder="https://hotel-website.com"
+                  className="pl-10"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Booking Links */}
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">Booking & Confirmation Links</Label>
+            <div className="grid grid-cols-1 gap-3">
+              <div className="relative">
+                <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="url"
+                  value={formData.bookingLink}
+                  onChange={(e) => setFormData({ ...formData, bookingLink: e.target.value })}
+                  placeholder="Booking details URL"
+                  className="pl-10"
+                />
+              </div>
+              <div className="relative">
+                <ClipboardCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="url"
+                  value={formData.confirmationLink}
+                  onChange={(e) => setFormData({ ...formData, confirmationLink: e.target.value })}
+                  placeholder="Confirmation page URL"
+                  className="pl-10"
+                />
+              </div>
+              <div className="relative">
+                <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="url"
+                  value={formData.ticketLink}
+                  onChange={(e) => setFormData({ ...formData, ticketLink: e.target.value })}
+                  placeholder="E-ticket or voucher URL"
                   className="pl-10"
                 />
               </div>
