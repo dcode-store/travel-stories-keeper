@@ -3,7 +3,7 @@ import { Memory } from '@/types/memory';
 import { ImageStack } from './ImageStack';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, Calendar, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { Pencil, Trash2, Calendar, Play, Pause, Volume2, VolumeX, Share2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,9 +21,10 @@ interface MemoryCardProps {
   isActive: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onShare?: () => void;
 }
 
-export function MemoryCard({ memory, isActive, onEdit, onDelete }: MemoryCardProps) {
+export function MemoryCard({ memory, isActive, onEdit, onDelete, onShare }: MemoryCardProps) {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isVideoMuted, setIsVideoMuted] = useState(true);
 
@@ -63,6 +64,16 @@ export function MemoryCard({ memory, isActive, onEdit, onDelete }: MemoryCardPro
         {/* Actions - only show when active */}
         {isActive && (
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {onShare && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onShare}
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              >
+                <Share2 className="w-4 h-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
