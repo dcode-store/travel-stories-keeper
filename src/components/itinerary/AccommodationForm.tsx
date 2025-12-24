@@ -209,126 +209,10 @@ export function AccommodationForm({
             </div>
           </div>
 
-          {/* BOOKING & CONFIRMATION SECTION */}
+          {/* BOOKING CONFIRMATION SECTION */}
           <div className="space-y-4 p-4 bg-accent/30 rounded-lg border border-accent/50">
-            <p className="text-xs font-medium text-accent-foreground uppercase tracking-wide">Booking & Confirmation</p>
+            <p className="text-xs font-medium text-accent-foreground uppercase tracking-wide">Booking Confirmation Details</p>
             
-            {/* Booking Link + Screenshots */}
-            <div className="space-y-3">
-              <Label>Booking Details</Label>
-              <div className="relative">
-                <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  type="url"
-                  value={formData.bookingLink}
-                  onChange={(e) => setFormData({ ...formData, bookingLink: e.target.value })}
-                  placeholder="Booking details URL"
-                  className="pl-10"
-                />
-              </div>
-              
-              {/* Booking Screenshots */}
-              <div className="space-y-2">
-                <input
-                  ref={bookingInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => handleImageUpload(e, setBookingScreenshots)}
-                  className="hidden"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full border-dashed"
-                  onClick={() => bookingInputRef.current?.click()}
-                >
-                  <ImagePlus className="w-4 h-4 mr-2" />
-                  Add Booking Screenshots
-                </Button>
-                
-                {bookingScreenshots.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {bookingScreenshots.map((img, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={img}
-                          alt={`Booking screenshot ${index + 1}`}
-                          className="w-16 h-16 object-cover rounded-md border"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index, setBookingScreenshots)}
-                          className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Confirmation Link + Screenshots */}
-            <div className="space-y-3">
-              <Label>Confirmation Details</Label>
-              <div className="relative">
-                <ClipboardCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  type="url"
-                  value={formData.confirmationLink}
-                  onChange={(e) => setFormData({ ...formData, confirmationLink: e.target.value })}
-                  placeholder="Confirmation page URL"
-                  className="pl-10"
-                />
-              </div>
-              
-              {/* Confirmation Screenshots */}
-              <div className="space-y-2">
-                <input
-                  ref={confirmationInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => handleImageUpload(e, setConfirmationScreenshots)}
-                  className="hidden"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full border-dashed"
-                  onClick={() => confirmationInputRef.current?.click()}
-                >
-                  <ImagePlus className="w-4 h-4 mr-2" />
-                  Add Confirmation Screenshots
-                </Button>
-                
-                {confirmationScreenshots.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {confirmationScreenshots.map((img, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={img}
-                          alt={`Confirmation screenshot ${index + 1}`}
-                          className="w-16 h-16 object-cover rounded-md border"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index, setConfirmationScreenshots)}
-                          className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
             {/* Confirmation Number */}
             <div className="space-y-2">
               <Label htmlFor="reservationNumber">Confirmation / Reservation #</Label>
@@ -342,6 +226,65 @@ export function AccommodationForm({
                   className="pl-10"
                 />
               </div>
+            </div>
+
+            {/* Booking/Confirmation Link */}
+            <div className="space-y-2">
+              <Label>Booking Link</Label>
+              <div className="relative">
+                <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="url"
+                  value={formData.bookingLink}
+                  onChange={(e) => setFormData({ ...formData, bookingLink: e.target.value })}
+                  placeholder="Link to booking or confirmation page"
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            
+            {/* Screenshots */}
+            <div className="space-y-2">
+              <Label>Screenshots</Label>
+              <input
+                ref={bookingInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => handleImageUpload(e, setBookingScreenshots)}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full border-dashed"
+                onClick={() => bookingInputRef.current?.click()}
+              >
+                <ImagePlus className="w-4 h-4 mr-2" />
+                Add Screenshots
+              </Button>
+              
+              {bookingScreenshots.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {bookingScreenshots.map((img, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={img}
+                        alt={`Screenshot ${index + 1}`}
+                        className="w-16 h-16 object-cover rounded-md border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index, setBookingScreenshots)}
+                        className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
