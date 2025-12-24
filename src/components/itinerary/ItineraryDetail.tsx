@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Itinerary, Activity as ActivityType, getItineraryDates, getActivitiesForDate, TRANSPORTATION_TYPES, calculateDuration } from '@/types/itinerary';
 import { ActivityForm } from './ActivityForm';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Pencil, Trash2, MapPin, Calendar, Clock, DollarSign, Hotel, Plane, Activity, Plus } from 'lucide-react';
-import { format } from 'date-fns';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ArrowLeft, Pencil, Trash2, MapPin, Calendar, Clock, DollarSign, Hotel, Plane, Activity, Plus, ChevronDown } from 'lucide-react';
+import { format, isToday, isPast, startOfDay } from 'date-fns';
 
 interface ItineraryDetailProps {
   itinerary: Itinerary;
@@ -44,6 +45,31 @@ export function ItineraryDetail({
   const [activityFormOpen, setActivityFormOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<ActivityType | undefined>();
   const [selectedDate, setSelectedDate] = useState<string | undefined>();
+  const [showPastDays, setShowPastDays] = useState(false);
+
+  // Determine if this is an ongoing trip (started but not ended)
+  const today = startOfDay(new Date());
+  const tripStart = startOfDay(new Date(itinerary.startDate));
+  const tripEnd = startOfDay(new Date(itinerary.endDate));
+  const isOngoingTrip = today >= tripStart && today <= tripEnd;
+
+  // Split dates into past and current/future for ongoing trips
+  const { pastDates, currentAndFutureDates } = useMemo(() => {
+    if (!isOngoingTrip) {
+      return { pastDates: [], currentAndFutureDates: dates };
+    }
+    const past: string[] = [];
+    const currentFuture: string[] = [];
+    dates.forEach(date => {
+      const dateObj = startOfDay(new Date(date));
+      if (isPast(dateObj) && !isToday(dateObj)) {
+        past.push(date);
+      } else {
+        currentFuture.push(date);
+      }
+    });
+    return { pastDates: past, currentAndFutureDates: currentFuture };
+  }, [dates, isOngoingTrip]);
 
   const handleAddActivity = (date?: string) => {
     setEditingActivity(undefined);
@@ -156,93 +182,49 @@ export function ItineraryDetail({
 
           {/* Schedule Tab */}
           <TabsContent value="schedule" className="space-y-6">
-            {dates.map((date, index) => {
-              const activities = getActivitiesForDate(itinerary, date);
+            {/* Past days collapsible for ongoing trips */}
+            {isOngoingTrip && pastDates.length > 0 && (
+              <Collapsible open={showPastDays} onOpenChange={setShowPastDays}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-between text-muted-foreground hover:text-foreground">
+                    <span>{pastDates.length} past day{pastDates.length > 1 ? 's' : ''}</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showPastDays ? 'rotate-180' : ''}`} />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4 pt-2">
+                  {pastDates.map((date, index) => (
+                    <DayCard
+                      key={date}
+                      date={date}
+                      dayNumber={index + 1}
+                      activities={getActivitiesForDate(itinerary, date)}
+                      itinerary={itinerary}
+                      isPastDay
+                      onAddActivity={handleAddActivity}
+                      onEditActivity={handleEditActivity}
+                      onDeleteActivity={onDeleteActivity}
+                    />
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+
+            {/* Current and future days */}
+            {currentAndFutureDates.map((date, index) => {
+              const dayNumber = isOngoingTrip ? pastDates.length + index + 1 : index + 1;
+              const isTodayDate = isToday(new Date(date));
               return (
-                <Card key={date}>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 text-lg">
-                        <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
-                          {index + 1}
-                        </span>
-                        {format(new Date(date), 'EEEE, MMMM d')}
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleAddActivity(date)}
-                        className="text-muted-foreground hover:text-primary"
-                      >
-                        <Plus className="w-4 h-4 mr-1" />
-                        Add
-                      </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {activities.length === 0 ? (
-                      <button
-                        onClick={() => handleAddActivity(date)}
-                        className="w-full py-6 border-2 border-dashed border-muted-foreground/20 rounded-lg text-sm text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
-                      >
-                        <Plus className="w-4 h-4 mx-auto mb-1" />
-                        Add your first activity
-                      </button>
-                    ) : (
-                      <div className="space-y-3">
-                        {activities.map(activity => (
-                          <div 
-                            key={activity.id} 
-                            className="flex gap-3 p-3 rounded-lg bg-muted/50 group cursor-pointer hover:bg-muted transition-colors"
-                            onClick={() => handleEditActivity(activity)}
-                          >
-                            <Activity className="w-4 h-4 mt-0.5 text-primary" />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{activity.name}</span>
-                                {activity.booked && <Badge variant="outline" className="text-xs">Booked</Badge>}
-                              </div>
-                              {activity.time && (
-                                <p className="text-sm text-muted-foreground flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  {activity.time}
-                                  {activity.endTime && ` - ${activity.endTime}`}
-                                </p>
-                              )}
-                              {activity.location && (
-                                <p className="text-sm text-muted-foreground flex items-center gap-1">
-                                  <MapPin className="w-3 h-3" />
-                                  {activity.location}
-                                </p>
-                              )}
-                              {activity.description && (
-                                <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {activity.cost && (
-                                <span className="text-sm text-muted-foreground">
-                                  {activity.currency || itinerary.currency || '$'}{activity.cost}
-                                </span>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDeleteActivity(activity.id);
-                                }}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                <DayCard
+                  key={date}
+                  date={date}
+                  dayNumber={dayNumber}
+                  activities={getActivitiesForDate(itinerary, date)}
+                  itinerary={itinerary}
+                  isToday={isTodayDate}
+                  onAddActivity={handleAddActivity}
+                  onEditActivity={handleEditActivity}
+                  onDeleteActivity={onDeleteActivity}
+                />
               );
             })}
           </TabsContent>
@@ -353,5 +335,128 @@ export function ItineraryDetail({
         currency={itinerary.currency}
       />
     </div>
+  );
+}
+
+// Extracted DayCard component for cleaner code
+interface DayCardProps {
+  date: string;
+  dayNumber: number;
+  activities: ActivityType[];
+  itinerary: Itinerary;
+  isPastDay?: boolean;
+  isToday?: boolean;
+  onAddActivity: (date: string) => void;
+  onEditActivity: (activity: ActivityType) => void;
+  onDeleteActivity: (activityId: string) => void;
+}
+
+function DayCard({
+  date,
+  dayNumber,
+  activities,
+  itinerary,
+  isPastDay,
+  isToday,
+  onAddActivity,
+  onEditActivity,
+  onDeleteActivity,
+}: DayCardProps) {
+  return (
+    <Card className={isPastDay ? 'opacity-60' : isToday ? 'ring-2 ring-primary/50' : ''}>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-3 text-lg">
+            <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+              isToday ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'
+            }`}>
+              {dayNumber}
+            </span>
+            <span className="flex items-center gap-2">
+              {format(new Date(date), 'EEEE, MMMM d')}
+              {isToday && <Badge className="text-xs">Today</Badge>}
+            </span>
+          </div>
+          {!isPastDay && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onAddActivity(date)}
+              className="text-muted-foreground hover:text-primary"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Add
+            </Button>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {activities.length === 0 ? (
+          isPastDay ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">No activities</p>
+          ) : (
+            <button
+              onClick={() => onAddActivity(date)}
+              className="w-full py-6 border-2 border-dashed border-muted-foreground/20 rounded-lg text-sm text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+            >
+              <Plus className="w-4 h-4 mx-auto mb-1" />
+              Add your first activity
+            </button>
+          )
+        ) : (
+          <div className="space-y-3">
+            {activities.map(activity => (
+              <div 
+                key={activity.id} 
+                className="flex gap-3 p-3 rounded-lg bg-muted/50 group cursor-pointer hover:bg-muted transition-colors"
+                onClick={() => onEditActivity(activity)}
+              >
+                <Activity className="w-4 h-4 mt-0.5 text-primary" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{activity.name}</span>
+                    {activity.booked && <Badge variant="outline" className="text-xs">Booked</Badge>}
+                  </div>
+                  {activity.time && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {activity.time}
+                      {activity.endTime && ` - ${activity.endTime}`}
+                    </p>
+                  )}
+                  {activity.location && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {activity.location}
+                    </p>
+                  )}
+                  {activity.description && (
+                    <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {activity.cost && (
+                    <span className="text-sm text-muted-foreground">
+                      {activity.currency || itinerary.currency || '$'}{activity.cost}
+                    </span>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteActivity(activity.id);
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
