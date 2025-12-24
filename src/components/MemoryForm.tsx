@@ -59,6 +59,9 @@ const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.7
 export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: MemoryFormProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
+  
+  // Ensure currentStep is always within bounds
+  const safeStep = Math.min(currentStep, STEPS.length - 1);
   const [formData, setFormData] = useState<MemoryFormData>({
     title: '',
     date: new Date().toISOString().split('T')[0],
@@ -140,7 +143,7 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
   };
 
   const canProceed = () => {
-    switch (STEPS[currentStep].id) {
+    switch (STEPS[safeStep].id) {
       case 'title':
         return formData.title.trim().length > 0;
       case 'date':
@@ -151,7 +154,7 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
   };
 
   const handleNext = () => {
-    if (currentStep < STEPS.length - 1) {
+    if (safeStep < STEPS.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
       handleSubmit();
@@ -159,7 +162,7 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
   };
 
   const handleBack = () => {
-    if (currentStep > 0) {
+    if (safeStep > 0) {
       setCurrentStep(prev => prev - 1);
     }
   };
@@ -173,8 +176,8 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
     onOpenChange(false);
   };
 
-  const progress = ((currentStep + 1) / STEPS.length) * 100;
-  const step = STEPS[currentStep];
+  const progress = ((safeStep + 1) / STEPS.length) * 100;
+  const step = STEPS[safeStep];
 
   const renderStepContent = () => {
     switch (step.id) {
@@ -345,7 +348,7 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
         <div className="px-6 pt-6">
           <Progress value={progress} className="h-1.5" />
           <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-            <span>Step {currentStep + 1} of {STEPS.length}</span>
+            <span>Step {safeStep + 1} of {STEPS.length}</span>
             <span>{step.label}</span>
           </div>
         </div>
@@ -373,10 +376,10 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
           <Button
             type="button"
             variant="ghost"
-            onClick={currentStep === 0 ? () => onOpenChange(false) : handleBack}
+            onClick={safeStep === 0 ? () => onOpenChange(false) : handleBack}
             className="gap-2"
           >
-            {currentStep === 0 ? (
+            {safeStep === 0 ? (
               'Cancel'
             ) : (
               <>
@@ -391,14 +394,14 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
             disabled={!canProceed() || isUploading}
             className="gap-2"
           >
-            {currentStep === STEPS.length - 1 ? (
+            {safeStep === STEPS.length - 1 ? (
               <>
                 <Check className="w-4 h-4" />
                 {initialData ? 'Save Changes' : 'Create Memory'}
               </>
             ) : (
               <>
-                {STEPS[currentStep].id === 'content' || STEPS[currentStep].id === 'photos' || STEPS[currentStep].id === 'location' ? 'Skip' : 'Next'}
+                {STEPS[safeStep].id === 'content' || STEPS[safeStep].id === 'photos' || STEPS[safeStep].id === 'location' ? 'Skip' : 'Next'}
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
