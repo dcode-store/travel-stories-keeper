@@ -7,9 +7,10 @@ interface TimelineProps {
   memories: Memory[];
   onEdit: (memory: Memory) => void;
   onDelete: (id: string) => void;
+  onShare?: (memory: Memory) => void;
 }
 
-export function Timeline({ memories, onEdit, onDelete }: TimelineProps) {
+export function Timeline({ memories, onEdit, onDelete, onShare }: TimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -87,6 +88,7 @@ export function Timeline({ memories, onEdit, onDelete }: TimelineProps) {
                 isActive={index === activeIndex}
                 onEdit={() => onEdit(memory)}
                 onDelete={() => onDelete(memory.id)}
+                onShare={onShare ? () => onShare(memory) : undefined}
               />
             </div>
           ))}

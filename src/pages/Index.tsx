@@ -21,6 +21,7 @@ const Index = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [editingMemory, setEditingMemory] = useState<Memory | undefined>();
+  const [sharingMemory, setSharingMemory] = useState<Memory | undefined>();
 
   const handleAddMemory = () => {
     setEditingMemory(undefined);
@@ -56,8 +57,8 @@ const Index = () => {
     });
   };
 
-  const handleShare = () => {
-    if (memories.length === 0) {
+  const handleShare = (memory?: Memory) => {
+    if (!memory && memories.length === 0) {
       toast({
         title: 'No memories to share',
         description: 'Add some memories first before sharing.',
@@ -65,6 +66,7 @@ const Index = () => {
       });
       return;
     }
+    setSharingMemory(memory);
     setIsShareOpen(true);
   };
 
@@ -92,9 +94,9 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-2">
               {memories.length > 0 && (
-                <Button variant="outline" size="sm" onClick={handleShare}>
+                <Button variant="outline" size="sm" onClick={() => handleShare()}>
                   <Share2 className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">Share</span>
+                  <span className="hidden sm:inline">Share All</span>
                 </Button>
               )}
               <Button onClick={handleAddMemory} size="sm">
@@ -123,6 +125,7 @@ const Index = () => {
               memories={memories}
               onEdit={handleEditMemory}
               onDelete={handleDeleteMemory}
+              onShare={handleShare}
             />
           )}
         </div>
@@ -137,8 +140,12 @@ const Index = () => {
 
       <ShareDialog
         open={isShareOpen}
-        onOpenChange={setIsShareOpen}
+        onOpenChange={(open) => {
+          setIsShareOpen(open);
+          if (!open) setSharingMemory(undefined);
+        }}
         memories={memories}
+        selectedMemory={sharingMemory}
       />
     </div>
   );
