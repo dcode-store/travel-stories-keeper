@@ -4,11 +4,12 @@ import { useLastRoute } from '@/hooks/useLastRoute';
 import { ItineraryCard } from '@/components/itinerary/ItineraryCard';
 import { ItineraryForm } from '@/components/itinerary/ItineraryForm';
 import { ItineraryDetail } from '@/components/itinerary/ItineraryDetail';
+import { AiTripPlanner } from '@/components/itinerary/AiTripPlanner';
 import { AppHeader } from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Itinerary, ItineraryFormData, Activity } from '@/types/itinerary';
-import { Plus, Plane, Calendar, MapPin } from 'lucide-react';
+import { Plus, Plane, Calendar, MapPin, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Itineraries = () => {
@@ -38,6 +39,7 @@ const Itineraries = () => {
   useLastRoute();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isAiPlannerOpen, setIsAiPlannerOpen] = useState(false);
   const [editingItinerary, setEditingItinerary] = useState<Itinerary | undefined>();
   const [selectedItinerary, setSelectedItinerary] = useState<Itinerary | undefined>();
 
@@ -61,6 +63,11 @@ const Itineraries = () => {
     }
   };
 
+  const handleAiPlannerComplete = (data: Omit<Itinerary, 'id' | 'createdAt' | 'updatedAt'>) => {
+    addItinerary(data as ItineraryFormData);
+    setIsAiPlannerOpen(false);
+    toast({ title: 'Trip created!', description: `Your ${data.destination} adventure is ready to customize.` });
+  };
   const handleDelete = (id: string) => {
     deleteItinerary(id);
     toast({ title: 'Trip deleted', description: 'The itinerary has been removed.' });
@@ -145,10 +152,16 @@ const Itineraries = () => {
                 {itineraries.length} {itineraries.length === 1 ? 'itinerary' : 'itineraries'}
               </p>
             </div>
-            <Button onClick={handleAdd}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Trip
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setIsAiPlannerOpen(true)}>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Plan with AI
+              </Button>
+              <Button onClick={handleAdd}>
+                <Plus className="w-4 h-4 mr-2" />
+                New Trip
+              </Button>
+            </div>
           </div>
 
           {itineraries.length === 0 ? (
@@ -160,10 +173,16 @@ const Itineraries = () => {
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                 Start planning your next adventure. Create an itinerary to organize your activities, accommodations, and transportation.
               </p>
-              <Button onClick={handleAdd}>
-                <Plus className="w-4 h-4 mr-2" />
-                Plan Your First Trip
-              </Button>
+              <div className="flex gap-3 justify-center">
+                <Button variant="outline" onClick={() => setIsAiPlannerOpen(true)}>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Plan with AI
+                </Button>
+                <Button onClick={handleAdd}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Plan Your First Trip
+                </Button>
+              </div>
             </div>
           ) : (
             <Tabs defaultValue="all" className="space-y-6">
@@ -252,6 +271,13 @@ const Itineraries = () => {
         onSubmit={handleSubmit}
         initialData={editingItinerary}
       />
+
+      {isAiPlannerOpen && (
+        <AiTripPlanner
+          onComplete={handleAiPlannerComplete}
+          onCancel={() => setIsAiPlannerOpen(false)}
+        />
+      )}
     </div>
   );
 };
