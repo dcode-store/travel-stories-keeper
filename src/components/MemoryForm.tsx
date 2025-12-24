@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Memory, MemoryFormData, MOOD_OPTIONS } from '@/types/memory';
-import { X, Plus, ImagePlus, Video, MapPin, Tag } from 'lucide-react';
+import { X, Plus, ImagePlus, Video, MapPin, Tag, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface MemoryFormProps {
@@ -16,7 +17,6 @@ interface MemoryFormProps {
   initialData?: Memory;
 }
 
-// Compress image to reduce storage size
 const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.7): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -25,24 +25,19 @@ const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.7
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let { width, height } = img;
-        
         if (width > maxWidth) {
           height = (height * maxWidth) / width;
           width = maxWidth;
         }
-        
         canvas.width = width;
         canvas.height = height;
-        
         const ctx = canvas.getContext('2d');
         if (!ctx) {
           reject(new Error('Failed to get canvas context'));
           return;
         }
-        
         ctx.drawImage(img, 0, 0, width, height);
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-        resolve(compressedDataUrl);
+        resolve(canvas.toDataURL('image/jpeg', quality));
       };
       img.onerror = () => reject(new Error('Failed to load image'));
       img.src = e.target?.result as string;
@@ -66,6 +61,7 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
   });
   const [tagInput, setTagInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [showSecondary, setShowSecondary] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -79,6 +75,9 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
         tags: initialData.tags || [],
         mood: initialData.mood || '',
       });
+      setShowSecondary(
+        !!(initialData.location || initialData.mood || initialData.tags?.length || initialData.videoUrl)
+      );
     } else {
       setFormData({
         title: '',
@@ -90,6 +89,7 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
         tags: [],
         mood: '',
       });
+      setShowSecondary(false);
     }
     setTagInput('');
   }, [initialData, open]);
@@ -97,74 +97,44 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-
     setIsUploading(true);
     const newImages: string[] = [];
-
     for (const file of Array.from(files)) {
       if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: 'Image too large',
-          description: `${file.name} is over 10MB. Please use a smaller image.`,
-          variant: 'destructive',
-        });
+        toast({ title: 'Image too large', description: `${file.name} is over 10MB.`, variant: 'destructive' });
         continue;
       }
-
       try {
-        const compressed = await compressImage(file);
-        newImages.push(compressed);
-      } catch (error) {
-        console.error('Failed to compress image:', error);
-        toast({
-          title: 'Image failed',
-          description: `Could not process ${file.name}.`,
-          variant: 'destructive',
-        });
+        newImages.push(await compressImage(file));
+      } catch {
+        toast({ title: 'Image failed', description: `Could not process ${file.name}.`, variant: 'destructive' });
       }
     }
-
-    setFormData(prev => ({
-      ...prev,
-      images: [...prev.images, ...newImages],
-    }));
+    setFormData(prev => ({ ...prev, images: [...prev.images, ...newImages] }));
     setIsUploading(false);
     e.target.value = '';
   }, [toast]);
 
   const removeImage = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
+    setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
   };
 
   const addTag = () => {
     const tag = tagInput.trim().toLowerCase();
     if (tag && !formData.tags?.includes(tag)) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...(prev.tags || []), tag],
-      }));
+      setFormData(prev => ({ ...prev, tags: [...(prev.tags || []), tag] }));
     }
     setTagInput('');
   };
 
   const removeTag = (tag: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags?.filter(t => t !== tag) || [],
-    }));
+    setFormData(prev => ({ ...prev, tags: prev.tags?.filter(t => t !== tag) || [] }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.content.trim()) {
-      toast({
-        title: 'Missing required fields',
-        description: 'Please fill in the title and content.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Missing required fields', description: 'Please fill in the title and content.', variant: 'destructive' });
       return;
     }
     onSubmit(formData);
@@ -181,7 +151,7 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 pt-4">
-          {/* Title & Date */}
+          {/* PRIMARY FIELDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="title">Title *</Label>
@@ -204,7 +174,6 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
             </div>
           </div>
 
-          {/* Content */}
           <div className="space-y-2">
             <Label htmlFor="content">Your Story *</Label>
             <Textarea
@@ -216,79 +185,6 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
             />
           </div>
 
-          {/* Location */}
-          <div className="space-y-2">
-            <Label htmlFor="location" className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" /> Location
-            </Label>
-            <Input
-              id="location"
-              value={formData.location}
-              onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
-              placeholder="Where did this happen?"
-            />
-          </div>
-
-          {/* Mood */}
-          <div className="space-y-2">
-            <Label>How were you feeling?</Label>
-            <div className="flex flex-wrap gap-2">
-              {MOOD_OPTIONS.map(mood => (
-                <button
-                  key={mood.value}
-                  type="button"
-                  onClick={() => setFormData(prev => ({ 
-                    ...prev, 
-                    mood: prev.mood === mood.value ? '' : mood.value 
-                  }))}
-                  className={`px-3 py-1.5 rounded-full text-sm transition-all ${
-                    formData.mood === mood.value
-                      ? 'ring-2 ring-primary ring-offset-2 bg-primary/10'
-                      : 'bg-muted hover:bg-muted/80'
-                  }`}
-                >
-                  {mood.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Tag className="w-4 h-4" /> Tags
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                value={tagInput}
-                onChange={e => setTagInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                placeholder="Add a tag..."
-                className="flex-1"
-              />
-              <Button type="button" variant="outline" size="icon" onClick={addTag}>
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-            {formData.tags && formData.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.tags.map(tag => (
-                  <Badge key={tag} variant="secondary" className="gap-1">
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      className="hover:text-destructive"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Images */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <ImagePlus className="w-4 h-4" /> Photos
@@ -296,11 +192,7 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
             <div className="flex flex-wrap gap-2">
               {formData.images.map((img, i) => (
                 <div key={i} className="relative group">
-                  <img
-                    src={img}
-                    alt={`Upload ${i + 1}`}
-                    className="w-20 h-20 object-cover rounded-lg"
-                  />
+                  <img src={img} alt={`Upload ${i + 1}`} className="w-20 h-20 object-cover rounded-lg" />
                   <button
                     type="button"
                     onClick={() => removeImage(i)}
@@ -311,14 +203,7 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
                 </div>
               ))}
               <label className="w-20 h-20 border-2 border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  disabled={isUploading}
-                />
+                <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={isUploading} />
                 {isUploading ? (
                   <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 ) : (
@@ -328,20 +213,91 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
             </div>
           </div>
 
-          {/* Video URL */}
-          <div className="space-y-2">
-            <Label htmlFor="videoUrl" className="flex items-center gap-2">
-              <Video className="w-4 h-4" /> Video URL
-            </Label>
-            <Input
-              id="videoUrl"
-              value={formData.videoUrl}
-              onChange={e => setFormData(prev => ({ ...prev, videoUrl: e.target.value }))}
-              placeholder="https://youtube.com/... or direct video URL"
-            />
-          </div>
+          {/* SECONDARY FIELDS */}
+          <Collapsible open={showSecondary} onOpenChange={setShowSecondary}>
+            <CollapsibleTrigger asChild>
+              <Button type="button" variant="ghost" className="w-full justify-between text-muted-foreground hover:text-foreground">
+                <span className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" /> More details (location, mood, tags, video)
+                </span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${showSecondary ? 'rotate-180' : ''}`} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-5 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="location" className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" /> Location
+                </Label>
+                <Input
+                  id="location"
+                  value={formData.location}
+                  onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                  placeholder="Where did this happen?"
+                />
+              </div>
 
-          {/* Submit */}
+              <div className="space-y-2">
+                <Label>How were you feeling?</Label>
+                <div className="flex flex-wrap gap-2">
+                  {MOOD_OPTIONS.map(mood => (
+                    <button
+                      key={mood.value}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, mood: prev.mood === mood.value ? '' : mood.value }))}
+                      className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                        formData.mood === mood.value ? 'ring-2 ring-primary ring-offset-2 bg-primary/10' : 'bg-muted hover:bg-muted/80'
+                      }`}
+                    >
+                      {mood.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Tag className="w-4 h-4" /> Tags
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={tagInput}
+                    onChange={e => setTagInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                    placeholder="Add a tag..."
+                    className="flex-1"
+                  />
+                  <Button type="button" variant="outline" size="icon" onClick={addTag}>
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                {formData.tags && formData.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formData.tags.map(tag => (
+                      <Badge key={tag} variant="secondary" className="gap-1">
+                        {tag}
+                        <button type="button" onClick={() => removeTag(tag)} className="hover:text-destructive">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="videoUrl" className="flex items-center gap-2">
+                  <Video className="w-4 h-4" /> Video URL
+                </Label>
+                <Input
+                  id="videoUrl"
+                  value={formData.videoUrl}
+                  onChange={e => setFormData(prev => ({ ...prev, videoUrl: e.target.value }))}
+                  placeholder="https://youtube.com/... or direct video URL"
+                />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
