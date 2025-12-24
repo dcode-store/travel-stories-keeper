@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Itinerary, Activity as ActivityType, getItineraryDates, getActivitiesForDate, TRANSPORTATION_TYPES, calculateDuration } from '@/types/itinerary';
+import { Itinerary, Activity as ActivityType, Accommodation, getItineraryDates, getActivitiesForDate, TRANSPORTATION_TYPES, calculateDuration } from '@/types/itinerary';
 import { ActivityForm } from './ActivityForm';
+import { AccommodationForm } from './AccommodationForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,8 +18,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ArrowLeft, Pencil, Trash2, MapPin, Calendar, Clock, DollarSign, Hotel, Plane, Activity, Plus, ChevronDown } from 'lucide-react';
-import { format, isToday, isPast, startOfDay } from 'date-fns';
+import { ArrowLeft, Pencil, Trash2, MapPin, Calendar, Clock, DollarSign, Hotel, Plane, Activity, Plus, ChevronDown, Phone, Mail, Globe, ExternalLink, Moon } from 'lucide-react';
+import { format, isToday, isPast, startOfDay, differenceInDays, isWithinInterval } from 'date-fns';
 
 interface ItineraryDetailProps {
   itinerary: Itinerary;
@@ -28,6 +29,9 @@ interface ItineraryDetailProps {
   onAddActivity: (activity: Omit<ActivityType, 'id'>) => void;
   onUpdateActivity: (activityId: string, activity: Partial<ActivityType>) => void;
   onDeleteActivity: (activityId: string) => void;
+  onAddAccommodation: (accommodation: Omit<Accommodation, 'id'>) => void;
+  onUpdateAccommodation: (accommodationId: string, accommodation: Partial<Accommodation>) => void;
+  onDeleteAccommodation: (accommodationId: string) => void;
 }
 
 export function ItineraryDetail({ 
@@ -38,6 +42,9 @@ export function ItineraryDetail({
   onAddActivity,
   onUpdateActivity,
   onDeleteActivity,
+  onAddAccommodation,
+  onUpdateAccommodation,
+  onDeleteAccommodation,
 }: ItineraryDetailProps) {
   const dates = getItineraryDates(itinerary.startDate, itinerary.endDate);
   const duration = calculateDuration(itinerary.startDate, itinerary.endDate);
@@ -46,6 +53,10 @@ export function ItineraryDetail({
   const [editingActivity, setEditingActivity] = useState<ActivityType | undefined>();
   const [selectedDate, setSelectedDate] = useState<string | undefined>();
   const [showPastDays, setShowPastDays] = useState(false);
+  
+  // Accommodation form state
+  const [accommodationFormOpen, setAccommodationFormOpen] = useState(false);
+  const [editingAccommodation, setEditingAccommodation] = useState<Accommodation | undefined>();
 
   // Determine if this is an ongoing trip (started but not ended)
   const today = startOfDay(new Date());
@@ -89,6 +100,38 @@ export function ItineraryDetail({
     } else {
       onAddActivity(data);
     }
+  };
+
+  // Accommodation handlers
+  const handleAddAccommodation = () => {
+    setEditingAccommodation(undefined);
+    setAccommodationFormOpen(true);
+  };
+
+  const handleEditAccommodation = (accommodation: Accommodation) => {
+    setEditingAccommodation(accommodation);
+    setAccommodationFormOpen(true);
+  };
+
+  const handleAccommodationSubmit = (data: Omit<Accommodation, 'id'>) => {
+    if (editingAccommodation) {
+      onUpdateAccommodation(editingAccommodation.id, data);
+    } else {
+      onAddAccommodation(data);
+    }
+  };
+
+  // Calculate nights for an accommodation
+  const calculateNights = (checkIn: string, checkOut: string) => {
+    return differenceInDays(new Date(checkOut), new Date(checkIn));
+  };
+
+  // Check if accommodation is currently active
+  const isCurrentStay = (acc: Accommodation) => {
+    const today = new Date();
+    const checkIn = new Date(acc.checkIn);
+    const checkOut = new Date(acc.checkOut);
+    return isWithinInterval(today, { start: checkIn, end: checkOut });
   };
 
   return (
@@ -230,45 +273,194 @@ export function ItineraryDetail({
           </TabsContent>
 
           {/* Accommodations Tab */}
-          <TabsContent value="accommodations" className="space-y-4">
+          <TabsContent value="accommodations" className="space-y-6">
+            {/* Add Stay Button */}
+            <Button onClick={handleAddAccommodation} className="w-full" variant="outline">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Stay
+            </Button>
+
             {itinerary.accommodations.length === 0 ? (
               <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  No accommodations added yet
+                <CardContent className="py-12 text-center">
+                  <Hotel className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                  <p className="text-muted-foreground">No accommodations added yet</p>
+                  <p className="text-sm text-muted-foreground/70 mt-1">Add your hotels, Airbnbs, or other stays</p>
                 </CardContent>
               </Card>
             ) : (
-              itinerary.accommodations.map(acc => (
-                <Card key={acc.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <Hotel className="w-5 h-5 mt-0.5 text-primary" />
-                      <div className="flex-1">
-                        <h4 className="font-medium">{acc.name}</h4>
-                        {acc.address && (
-                          <p className="text-sm text-muted-foreground flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            {acc.address}
-                          </p>
-                        )}
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {format(new Date(acc.checkIn), 'MMM d')} → {format(new Date(acc.checkOut), 'MMM d, yyyy')}
-                        </p>
-                        {acc.reservationNumber && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Confirmation: {acc.reservationNumber}
-                          </p>
-                        )}
-                      </div>
-                      {acc.cost && (
-                        <span className="text-sm font-medium">
-                          {acc.currency || itinerary.currency || '$'}{acc.cost}
-                        </span>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+              <>
+                {/* Timeline View */}
+                <div className="relative">
+                  {/* Timeline line */}
+                  <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
+                  
+                  <div className="space-y-4">
+                    {itinerary.accommodations.map((acc, index) => {
+                      const nights = calculateNights(acc.checkIn, acc.checkOut);
+                      const isCurrent = isCurrentStay(acc);
+                      
+                      return (
+                        <div key={acc.id} className="relative pl-10">
+                          {/* Timeline dot */}
+                          <div className={`absolute left-2.5 top-4 w-3 h-3 rounded-full border-2 ${
+                            isCurrent 
+                              ? 'bg-primary border-primary animate-pulse' 
+                              : 'bg-background border-muted-foreground/50'
+                          }`} />
+                          
+                          <Card className={`transition-all ${isCurrent ? 'ring-2 ring-primary/50 bg-primary/5' : ''}`}>
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <Hotel className={`w-5 h-5 mt-0.5 ${isCurrent ? 'text-primary' : 'text-muted-foreground'}`} />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <h4 className="font-medium">{acc.name}</h4>
+                                      {isCurrent && (
+                                        <Badge variant="default" className="text-xs">
+                                          Current Stay
+                                        </Badge>
+                                      )}
+                                      <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                                        <Moon className="w-3 h-3" />
+                                        {nights} night{nights !== 1 ? 's' : ''}
+                                      </Badge>
+                                    </div>
+                                    
+                                    {acc.address && (
+                                      <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                                        <MapPin className="w-3 h-3 shrink-0" />
+                                        <span className="truncate">{acc.address}</span>
+                                      </p>
+                                    )}
+                                    
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                      <span className="font-medium">Check-in:</span> {format(new Date(acc.checkIn), 'EEE, MMM d')} → 
+                                      <span className="font-medium"> Check-out:</span> {format(new Date(acc.checkOut), 'EEE, MMM d')}
+                                    </p>
+                                    
+                                    {acc.reservationNumber && (
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        <span className="font-medium">Confirmation:</span> {acc.reservationNumber}
+                                      </p>
+                                    )}
+                                    
+                                    {/* Contact Info */}
+                                    {(acc.phone || acc.email || acc.website) && (
+                                      <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-border/50">
+                                        {acc.phone && (
+                                          <a 
+                                            href={`tel:${acc.phone}`} 
+                                            className="text-xs text-primary hover:underline flex items-center gap-1"
+                                          >
+                                            <Phone className="w-3 h-3" />
+                                            {acc.phone}
+                                          </a>
+                                        )}
+                                        {acc.email && (
+                                          <a 
+                                            href={`mailto:${acc.email}`} 
+                                            className="text-xs text-primary hover:underline flex items-center gap-1"
+                                          >
+                                            <Mail className="w-3 h-3" />
+                                            {acc.email}
+                                          </a>
+                                        )}
+                                        {acc.website && (
+                                          <a 
+                                            href={acc.website} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-xs text-primary hover:underline flex items-center gap-1"
+                                          >
+                                            <Globe className="w-3 h-3" />
+                                            Website
+                                            <ExternalLink className="w-2.5 h-2.5" />
+                                          </a>
+                                        )}
+                                      </div>
+                                    )}
+                                    
+                                    {acc.notes && (
+                                      <p className="text-xs text-muted-foreground mt-2 italic">
+                                        {acc.notes}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <div className="flex flex-col items-end gap-2">
+                                  {acc.cost && (
+                                    <span className="text-sm font-semibold">
+                                      {acc.currency || itinerary.currency || '$'}{acc.cost.toLocaleString()}
+                                    </span>
+                                  )}
+                                  
+                                  {/* Quick Actions */}
+                                  <div className="flex items-center gap-1">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={() => handleEditAccommodation(acc)}
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm"
+                                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Delete this stay?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This will permanently delete "{acc.name}" from your itinerary.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction 
+                                            onClick={() => onDeleteAccommodation(acc.id)}
+                                            className="bg-destructive text-destructive-foreground"
+                                          >
+                                            Delete
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Total Cost Summary */}
+                {itinerary.accommodations.some(a => a.cost) && (
+                  <Card className="bg-muted/30">
+                    <CardContent className="py-3 px-4 flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Total Accommodation Cost</span>
+                      <span className="font-semibold">
+                        {itinerary.currency || '$'}
+                        {itinerary.accommodations
+                          .reduce((sum, acc) => sum + (acc.cost || 0), 0)
+                          .toLocaleString()}
+                      </span>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
             )}
           </TabsContent>
 
@@ -333,6 +525,17 @@ export function ItineraryDetail({
         initialData={editingActivity}
         selectedDate={selectedDate}
         currency={itinerary.currency}
+      />
+
+      {/* Accommodation Form */}
+      <AccommodationForm
+        open={accommodationFormOpen}
+        onOpenChange={setAccommodationFormOpen}
+        onSubmit={handleAccommodationSubmit}
+        initialData={editingAccommodation}
+        currency={itinerary.currency}
+        tripStartDate={itinerary.startDate}
+        tripEndDate={itinerary.endDate}
       />
     </div>
   );
