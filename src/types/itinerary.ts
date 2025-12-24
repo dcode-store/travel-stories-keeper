@@ -30,6 +30,9 @@ export interface Accommodation {
     bookingLink?: string;
     confirmationLink?: string;
     ticketLink?: string;
+    // Screenshots
+    bookingScreenshots?: string[];
+    confirmationScreenshots?: string[];
 }
 
 export type TransportationType = 'flight' | 'train' | 'bus' | 'car' | 'ferry' | 'taxi' | 'other';
