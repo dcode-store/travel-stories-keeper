@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
-import { Itinerary, Activity as ActivityType, Accommodation, getItineraryDates, getActivitiesForDate, TRANSPORTATION_TYPES, calculateDuration } from '@/types/itinerary';
+import { Itinerary, Activity as ActivityType, Accommodation, Transportation, getItineraryDates, getActivitiesForDate, TRANSPORTATION_TYPES, calculateDuration } from '@/types/itinerary';
 import { ActivityForm } from './ActivityForm';
 import { AccommodationForm } from './AccommodationForm';
+import { TransportForm } from './TransportForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ArrowLeft, Pencil, Trash2, MapPin, Calendar, Clock, DollarSign, Hotel, Plane, Activity, Plus, ChevronDown, Phone, Mail, Globe, ExternalLink, Moon, Link, Ticket, ClipboardCheck } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, MapPin, Calendar, Clock, DollarSign, Hotel, Plane, Activity, Plus, ChevronDown, Phone, Mail, Globe, ExternalLink, Moon, Link, Ticket, ClipboardCheck, ArrowRight } from 'lucide-react';
 import { format, isToday, isPast, startOfDay, differenceInDays, isWithinInterval } from 'date-fns';
 
 interface ItineraryDetailProps {
@@ -32,6 +33,9 @@ interface ItineraryDetailProps {
   onAddAccommodation: (accommodation: Omit<Accommodation, 'id'>) => void;
   onUpdateAccommodation: (accommodationId: string, accommodation: Partial<Accommodation>) => void;
   onDeleteAccommodation: (accommodationId: string) => void;
+  onAddTransportation: (transport: Omit<Transportation, 'id'>) => void;
+  onUpdateTransportation: (transportId: string, transport: Partial<Transportation>) => void;
+  onDeleteTransportation: (transportId: string) => void;
 }
 
 export function ItineraryDetail({ 
@@ -45,6 +49,9 @@ export function ItineraryDetail({
   onAddAccommodation,
   onUpdateAccommodation,
   onDeleteAccommodation,
+  onAddTransportation,
+  onUpdateTransportation,
+  onDeleteTransportation,
 }: ItineraryDetailProps) {
   const dates = getItineraryDates(itinerary.startDate, itinerary.endDate);
   const duration = calculateDuration(itinerary.startDate, itinerary.endDate);
@@ -57,6 +64,10 @@ export function ItineraryDetail({
   // Accommodation form state
   const [accommodationFormOpen, setAccommodationFormOpen] = useState(false);
   const [editingAccommodation, setEditingAccommodation] = useState<Accommodation | undefined>();
+
+  // Transport form state
+  const [transportFormOpen, setTransportFormOpen] = useState(false);
+  const [editingTransport, setEditingTransport] = useState<Transportation | undefined>();
 
   // Determine if this is an ongoing trip (started but not ended)
   const today = startOfDay(new Date());
@@ -132,6 +143,31 @@ export function ItineraryDetail({
     const checkIn = new Date(acc.checkIn);
     const checkOut = new Date(acc.checkOut);
     return isWithinInterval(today, { start: checkIn, end: checkOut });
+  };
+
+  // Transport handlers
+  const handleAddTransport = () => {
+    setEditingTransport(undefined);
+    setTransportFormOpen(true);
+  };
+
+  const handleEditTransport = (transport: Transportation) => {
+    setEditingTransport(transport);
+    setTransportFormOpen(true);
+  };
+
+  const handleTransportSubmit = (data: Omit<Transportation, 'id'>) => {
+    if (editingTransport) {
+      onUpdateTransportation(editingTransport.id, data);
+    } else {
+      onAddTransportation(data);
+    }
+  };
+
+  // Check if transport is happening today
+  const isCurrentTransport = (transport: Transportation) => {
+    const today = new Date().toISOString().split('T')[0];
+    return transport.departureDate === today;
   };
 
   return (
@@ -559,53 +595,259 @@ export function ItineraryDetail({
           </TabsContent>
 
           {/* Transportation Tab */}
-          <TabsContent value="transportation" className="space-y-4">
+          <TabsContent value="transportation" className="space-y-6">
+            {/* Add Transport Button */}
+            <Button onClick={handleAddTransport} className="w-full" variant="outline">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Transport
+            </Button>
+
             {itinerary.transportation.length === 0 ? (
               <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  No transportation added yet
+                <CardContent className="py-8 text-center">
+                  <Plane className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                  <p className="text-muted-foreground mb-1">No transportation added yet</p>
+                  <p className="text-sm text-muted-foreground/70 mb-6">Book your transport or add existing bookings</p>
+                  
+                  {/* Transport Provider Links */}
+                  <div className="space-y-3">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Find transport on</p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <a 
+                        href={`https://www.skyscanner.com/transport/flights/${encodeURIComponent(itinerary.destination)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm bg-[#0770E3] text-white rounded-md hover:bg-[#0770E3]/90 transition-colors"
+                      >
+                        Skyscanner
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <a 
+                        href={`https://www.google.com/travel/flights?q=flights+to+${encodeURIComponent(itinerary.destination)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm bg-[#4285F4] text-white rounded-md hover:bg-[#4285F4]/90 transition-colors"
+                      >
+                        Google Flights
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <a 
+                        href="https://www.rome2rio.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm bg-[#FF6B00] text-white rounded-md hover:bg-[#FF6B00]/90 transition-colors"
+                      >
+                        Rome2Rio
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <a 
+                        href="https://www.thetrainline.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm bg-[#03A9A3] text-white rounded-md hover:bg-[#03A9A3]/90 transition-colors"
+                      >
+                        Trainline
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <a 
+                        href="https://www.kayak.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm bg-[#FF690F] text-white rounded-md hover:bg-[#FF690F]/90 transition-colors"
+                      >
+                        Kayak
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             ) : (
-              itinerary.transportation.map(transport => {
-                const typeInfo = TRANSPORTATION_TYPES[transport.type];
-                return (
-                  <Card key={transport.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <span className="text-2xl">{typeInfo.icon}</span>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium">{transport.name || typeInfo.label}</h4>
-                            {transport.number && (
-                              <Badge variant="outline" className="text-xs">
-                                {transport.number}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {transport.departureLocation} → {transport.arrivalLocation}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {format(new Date(transport.departureDate), 'MMM d, yyyy')}
-                            {transport.departureTime && ` at ${transport.departureTime}`}
-                          </p>
-                          {transport.confirmationNumber && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Confirmation: {transport.confirmationNumber}
-                            </p>
-                          )}
+              <>
+                {/* Timeline View */}
+                <div className="relative">
+                  {/* Timeline line */}
+                  <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
+                  
+                  <div className="space-y-4">
+                    {itinerary.transportation.map((transport) => {
+                      const typeInfo = TRANSPORTATION_TYPES[transport.type];
+                      const isCurrent = isCurrentTransport(transport);
+                      
+                      return (
+                        <div key={transport.id} className="relative pl-10">
+                          {/* Timeline dot */}
+                          <div className={`absolute left-2.5 top-4 w-3 h-3 rounded-full border-2 ${
+                            isCurrent 
+                              ? 'bg-primary border-primary animate-pulse' 
+                              : 'bg-background border-muted-foreground/50'
+                          }`} />
+                          
+                          <Card className={`transition-all ${isCurrent ? 'ring-2 ring-primary/50 bg-primary/5' : ''}`}>
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <span className={`text-2xl ${isCurrent ? 'animate-pulse' : ''}`}>{typeInfo.icon}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <h4 className="font-medium">{transport.name || typeInfo.label}</h4>
+                                      {isCurrent && (
+                                        <Badge variant="default" className="text-xs">
+                                          Today
+                                        </Badge>
+                                      )}
+                                      {transport.number && (
+                                        <Badge variant="outline" className="text-xs">
+                                          {transport.number}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    
+                                    {/* Route */}
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                      <span>{transport.departureLocation}</span>
+                                      <ArrowRight className="w-3 h-3" />
+                                      <span>{transport.arrivalLocation}</span>
+                                    </div>
+                                    
+                                    {/* Date/Time */}
+                                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                                      <span className="flex items-center gap-1">
+                                        <Calendar className="w-3 h-3" />
+                                        {format(new Date(transport.departureDate), 'MMM d, yyyy')}
+                                      </span>
+                                      {transport.departureTime && (
+                                        <span className="flex items-center gap-1">
+                                          <Clock className="w-3 h-3" />
+                                          {transport.departureTime}
+                                          {transport.arrivalTime && ` - ${transport.arrivalTime}`}
+                                        </span>
+                                      )}
+                                    </div>
+                                    
+                                    {/* Company */}
+                                    {transport.company && (
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        {transport.company}
+                                      </p>
+                                    )}
+                                    
+                                    {/* Confirmation */}
+                                    {transport.confirmationNumber && (
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        Confirmation: <span className="font-mono">{transport.confirmationNumber}</span>
+                                      </p>
+                                    )}
+                                    
+                                    {/* Booking Links */}
+                                    {(transport.bookingLink || transport.confirmationLink) && (
+                                      <div className="flex flex-wrap gap-2 mt-2">
+                                        {transport.bookingLink && (
+                                          <a
+                                            href={transport.bookingLink}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                                          >
+                                            <Link className="w-3 h-3" />
+                                            Booking
+                                            <ExternalLink className="w-2.5 h-2.5" />
+                                          </a>
+                                        )}
+                                        {transport.confirmationLink && (
+                                          <a
+                                            href={transport.confirmationLink}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                                          >
+                                            <ClipboardCheck className="w-3 h-3" />
+                                            Confirmation
+                                            <ExternalLink className="w-2.5 h-2.5" />
+                                          </a>
+                                        )}
+                                      </div>
+                                    )}
+                                    
+                                    {transport.notes && (
+                                      <p className="text-xs text-muted-foreground mt-2 italic">
+                                        {transport.notes}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <div className="flex flex-col items-end gap-2">
+                                  {transport.cost && (
+                                    <span className="text-sm font-semibold">
+                                      {transport.currency || itinerary.currency || '$'}{transport.cost.toLocaleString()}
+                                    </span>
+                                  )}
+                                  
+                                  {/* Quick Actions */}
+                                  <div className="flex items-center gap-1">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={() => handleEditTransport(transport)}
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm"
+                                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Delete this transport?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This will permanently delete "{transport.name || typeInfo.label}" from your itinerary.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction 
+                                            onClick={() => onDeleteTransportation(transport.id)}
+                                            className="bg-destructive text-destructive-foreground"
+                                          >
+                                            Delete
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
                         </div>
-                        {transport.cost && (
-                          <span className="text-sm font-medium">
-                            {transport.currency || itinerary.currency || '$'}{transport.cost}
-                          </span>
-                        )}
-                      </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Total Cost Summary */}
+                {itinerary.transportation.some(t => t.cost) && (
+                  <Card className="bg-muted/30">
+                    <CardContent className="py-3 px-4 flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Total Transport Cost</span>
+                      <span className="font-semibold">
+                        {itinerary.currency || '$'}
+                        {itinerary.transportation
+                          .reduce((sum, t) => sum + (t.cost || 0), 0)
+                          .toLocaleString()}
+                      </span>
                     </CardContent>
                   </Card>
-                );
-              })
+                )}
+              </>
             )}
           </TabsContent>
         </Tabs>
@@ -627,6 +869,17 @@ export function ItineraryDetail({
         onOpenChange={setAccommodationFormOpen}
         onSubmit={handleAccommodationSubmit}
         initialData={editingAccommodation}
+        currency={itinerary.currency}
+        tripStartDate={itinerary.startDate}
+        tripEndDate={itinerary.endDate}
+      />
+
+      {/* Transport Form */}
+      <TransportForm
+        open={transportFormOpen}
+        onOpenChange={setTransportFormOpen}
+        onSubmit={handleTransportSubmit}
+        initialData={editingTransport}
         currency={itinerary.currency}
         tripStartDate={itinerary.startDate}
         tripEndDate={itinerary.endDate}
