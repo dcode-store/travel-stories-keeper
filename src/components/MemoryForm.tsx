@@ -20,11 +20,10 @@ interface MemoryFormProps {
 const STEPS = [
   { id: 'title', label: 'Title', question: 'What would you call this memory?' },
   { id: 'date', label: 'Date', question: 'When did this happen?' },
-  { id: 'content', label: 'Story', question: 'Tell the story of this moment...' },
+  { id: 'content', label: 'Story', question: 'Tell us what happened or how was it? (optional)' },
   { id: 'photos', label: 'Photos', question: 'Add some photos (optional)' },
   { id: 'location', label: 'Location', question: 'Where did this take place?' },
-  { id: 'mood', label: 'Mood', question: 'How were you feeling?' },
-  { id: 'extras', label: 'Extras', question: 'Any tags or video to add?' },
+  { id: 'extras', label: 'Extras', question: 'Any mood, tags or video to add?' },
 ];
 
 const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.7): Promise<string> => {
@@ -146,8 +145,6 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
         return formData.title.trim().length > 0;
       case 'date':
         return formData.date.length > 0;
-      case 'content':
-        return formData.content.trim().length > 0;
       default:
         return true;
     }
@@ -168,8 +165,8 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
   };
 
   const handleSubmit = () => {
-    if (!formData.title.trim() || !formData.content.trim()) {
-      toast({ title: 'Missing required fields', description: 'Please fill in the title and content.', variant: 'destructive' });
+    if (!formData.title.trim()) {
+      toast({ title: 'Missing required fields', description: 'Please fill in the title.', variant: 'destructive' });
       return;
     }
     onSubmit(formData);
@@ -265,31 +262,30 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
           </div>
         );
 
-      case 'mood':
-        return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              {MOOD_OPTIONS.map(mood => (
-                <button
-                  key={mood.value}
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, mood: prev.mood === mood.value ? '' : mood.value }))}
-                  className={`px-4 py-3 rounded-xl text-left transition-all ${
-                    formData.mood === mood.value 
-                      ? 'ring-2 ring-primary ring-offset-2 bg-primary/10' 
-                      : 'bg-muted hover:bg-muted/80'
-                  }`}
-                >
-                  <span className="text-lg">{mood.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-
       case 'extras':
         return (
           <div className="space-y-6">
+            {/* Mood */}
+            <div className="space-y-3">
+              <div className="text-sm text-muted-foreground">How were you feeling?</div>
+              <div className="grid grid-cols-2 gap-2">
+                {MOOD_OPTIONS.map(mood => (
+                  <button
+                    key={mood.value}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, mood: prev.mood === mood.value ? '' : mood.value }))}
+                    className={`px-3 py-2 rounded-lg text-left transition-all text-sm ${
+                      formData.mood === mood.value 
+                        ? 'ring-2 ring-primary ring-offset-1 bg-primary/10' 
+                        : 'bg-muted hover:bg-muted/80'
+                    }`}
+                  >
+                    {mood.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Tags */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -402,7 +398,7 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
               </>
             ) : (
               <>
-                {STEPS[currentStep].id === 'photos' || STEPS[currentStep].id === 'location' || STEPS[currentStep].id === 'mood' ? 'Skip' : 'Next'}
+                {STEPS[currentStep].id === 'content' || STEPS[currentStep].id === 'photos' || STEPS[currentStep].id === 'location' ? 'Skip' : 'Next'}
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
