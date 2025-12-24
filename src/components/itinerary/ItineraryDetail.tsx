@@ -385,11 +385,11 @@ function DayCard({
                 variant="ghost"
                 size="sm"
                 onClick={() => onAddActivity(date)}
-                className="text-muted-foreground hover:text-primary overflow-hidden group-hover:bg-primary group-hover:text-primary-foreground transition-all"
+                className="text-muted-foreground hover:text-primary transition-all min-w-[160px] justify-start"
               >
                 <div className="flex items-center">
                   <Plus className="w-4 h-4 mr-1 flex-shrink-0" />
-                  <div className="relative overflow-hidden">
+                  <div className="relative w-[130px] overflow-hidden">
                     <span className="block transition-transform duration-300 group-hover:-translate-x-full group-hover:opacity-0">
                       Add activity
                     </span>
