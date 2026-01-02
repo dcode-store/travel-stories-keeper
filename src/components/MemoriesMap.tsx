@@ -2,16 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Memory } from '@/types/memory';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { MapPin, Key, X, ExternalLink } from 'lucide-react';
+import { MapPin, X, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface MemoriesMapProps {
   memories: Memory[];
   onSelectMemory?: (memory: Memory) => void;
 }
+
+const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
 // Simple geocoding using Mapbox Geocoding API
 async function geocodeLocation(location: string, accessToken: string): Promise<[number, number] | null> {
@@ -34,10 +34,6 @@ export function MemoriesMap({ memories, onSelectMemory }: MemoriesMapProps) {
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   
-  const [mapboxToken, setMapboxToken] = useState(() => 
-    localStorage.getItem('mapbox_token') || ''
-  );
-  const [tokenInput, setTokenInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
 
@@ -121,53 +117,20 @@ export function MemoriesMap({ memories, onSelectMemory }: MemoriesMapProps) {
       markersRef.current = [];
       map.current?.remove();
     };
-  }, [mapboxToken, memories]);
-
-  const handleSaveToken = () => {
-    if (tokenInput.trim()) {
-      localStorage.setItem('mapbox_token', tokenInput.trim());
-      setMapboxToken(tokenInput.trim());
-    }
-  };
-
-  const handleClearToken = () => {
-    localStorage.removeItem('mapbox_token');
-    setMapboxToken('');
-    setTokenInput('');
-  };
+  }, [memories]);
 
   if (!mapboxToken) {
     return (
       <Card className="p-6 max-w-md mx-auto">
         <div className="text-center space-y-4">
-          <div className="w-12 h-12 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
-            <Key className="w-6 h-6 text-primary" />
+          <div className="w-12 h-12 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
+            <AlertCircle className="w-6 h-6 text-destructive" />
           </div>
           <div>
             <h3 className="font-display text-lg font-medium">Mapbox Token Required</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Enter your Mapbox public token to view your memories on a map.
+              Please add your Mapbox public token to the <code className="bg-muted px-1 rounded">VITE_MAPBOX_TOKEN</code> environment variable.
             </p>
-          </div>
-          <div className="space-y-3">
-            <Input
-              value={tokenInput}
-              onChange={(e) => setTokenInput(e.target.value)}
-              placeholder="pk.eyJ1Ijoi..."
-              className="text-sm"
-            />
-            <Button onClick={handleSaveToken} className="w-full" disabled={!tokenInput.trim()}>
-              Save & Continue
-            </Button>
-            <a
-              href="https://console.mapbox.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
-            >
-              Get a free token from Mapbox
-              <ExternalLink className="w-3 h-3" />
-            </a>
           </div>
         </div>
       </Card>
@@ -184,9 +147,6 @@ export function MemoriesMap({ memories, onSelectMemory }: MemoriesMapProps) {
         <p className="text-sm text-muted-foreground mt-1">
           Add locations to your memories to see them on the map.
         </p>
-        <Button variant="ghost" size="sm" onClick={handleClearToken} className="mt-4">
-          Change Mapbox Token
-        </Button>
       </Card>
     );
   }
@@ -235,17 +195,6 @@ export function MemoriesMap({ memories, onSelectMemory }: MemoriesMapProps) {
           </Card>
         </div>
       )}
-
-      {/* Token change button */}
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={handleClearToken}
-        className="absolute top-4 left-4 text-xs"
-      >
-        <Key className="w-3 h-3 mr-1" />
-        Change Token
-      </Button>
 
       {/* Legend */}
       <div className="absolute bottom-4 right-4 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-muted-foreground">
