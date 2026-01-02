@@ -181,7 +181,7 @@ export function RichTextEditor({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full min-h-[140px] p-4 bg-background border border-input rounded-xl resize-none text-base focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        className="w-full min-h-[280px] p-4 bg-background border border-input rounded-xl resize-y text-base focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
       />
 
       {/* Inline images preview */}
