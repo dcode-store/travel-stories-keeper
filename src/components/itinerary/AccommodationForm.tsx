@@ -209,6 +209,65 @@ export function AccommodationForm({
             </div>
           </div>
 
+          {/* ADDITIONAL DETAILS - Collapsible */}
+          <Collapsible open={showOptionalFields} onOpenChange={setShowOptionalFields}>
+            <CollapsibleTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full justify-between text-muted-foreground hover:text-foreground"
+              >
+                <span>Additional Details</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${showOptionalFields ? 'rotate-180' : ''}`} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 pt-2">
+              {/* Address */}
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="123 Main Street, City"
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              {/* Cost */}
+              <div className="space-y-2">
+                <Label htmlFor="cost">Total Cost</Label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="cost"
+                    type="number"
+                    step="0.01"
+                    value={formData.cost}
+                    onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+                    placeholder="0.00"
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Check-in instructions, door codes, special requests..."
+                  rows={3}
+                />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
           {/* BOOKING CONFIRMATION SECTION */}
           <div className="space-y-4 p-4 bg-accent/30 rounded-lg border border-accent/50">
             <p className="text-xs font-medium text-accent-foreground uppercase tracking-wide">Booking Confirmation Details</p>
@@ -288,64 +347,6 @@ export function AccommodationForm({
             </div>
           </div>
 
-          {/* OPTIONAL FIELDS - Collapsible */}
-          <Collapsible open={showOptionalFields} onOpenChange={setShowOptionalFields}>
-            <CollapsibleTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full justify-between text-muted-foreground hover:text-foreground"
-              >
-                <span>Additional Details</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${showOptionalFields ? 'rotate-180' : ''}`} />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4 pt-2">
-              {/* Address */}
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="123 Main Street, City"
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-
-              {/* Cost */}
-              <div className="space-y-2">
-                <Label htmlFor="cost">Total Cost</Label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="cost"
-                    type="number"
-                    step="0.01"
-                    value={formData.cost}
-                    onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                    placeholder="0.00"
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-
-              {/* Notes */}
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Check-in instructions, door codes, special requests..."
-                  rows={3}
-                />
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
 
           {/* Actions */}
           <div className="flex justify-end gap-2 pt-4">

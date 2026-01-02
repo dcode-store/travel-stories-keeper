@@ -289,86 +289,7 @@ export function TransportForm({
             </div>
           </div>
 
-          {/* BOOKING CONFIRMATION SECTION */}
-          <div className="space-y-4 p-4 bg-accent/30 rounded-lg border border-accent/50">
-            <p className="text-xs font-medium text-accent-foreground uppercase tracking-wide">Booking Confirmation Details</p>
-            
-            {/* Confirmation Number */}
-            <div className="space-y-2">
-              <Label htmlFor="confirmationNumber">Confirmation / Booking #</Label>
-              <div className="relative">
-                <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="confirmationNumber"
-                  value={formData.confirmationNumber}
-                  onChange={(e) => setFormData({ ...formData, confirmationNumber: e.target.value })}
-                  placeholder="ABC123"
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            {/* Booking/Confirmation Link */}
-            <div className="space-y-2">
-              <Label>Booking Link</Label>
-              <div className="relative">
-                <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  type="url"
-                  value={formData.bookingLink}
-                  onChange={(e) => setFormData({ ...formData, bookingLink: e.target.value })}
-                  placeholder="Link to booking or confirmation page"
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            
-            {/* Screenshots */}
-            <div className="space-y-2">
-              <Label>Screenshots</Label>
-              <input
-                ref={bookingInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => handleImageUpload(e, setBookingScreenshots)}
-                className="hidden"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full border-dashed"
-                onClick={() => bookingInputRef.current?.click()}
-              >
-                <ImagePlus className="w-4 h-4 mr-2" />
-                Add Screenshots
-              </Button>
-              
-              {bookingScreenshots.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {bookingScreenshots.map((img, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={img}
-                        alt={`Screenshot ${index + 1}`}
-                        className="w-16 h-16 object-cover rounded-md border"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index, setBookingScreenshots)}
-                        className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* OPTIONAL FIELDS - Collapsible */}
+          {/* ADDITIONAL DETAILS - Collapsible */}
           <Collapsible open={showOptionalFields} onOpenChange={setShowOptionalFields}>
             <CollapsibleTrigger asChild>
               <Button
@@ -461,12 +382,91 @@ export function TransportForm({
                   id="notes"
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Seat preferences, luggage info, terminal details..."
+                  placeholder="Seat numbers, luggage info, special requirements..."
                   rows={3}
                 />
               </div>
             </CollapsibleContent>
           </Collapsible>
+
+          {/* BOOKING CONFIRMATION SECTION */}
+          <div className="space-y-4 p-4 bg-accent/30 rounded-lg border border-accent/50">
+            <p className="text-xs font-medium text-accent-foreground uppercase tracking-wide">Booking Confirmation Details</p>
+            
+            {/* Confirmation Number */}
+            <div className="space-y-2">
+              <Label htmlFor="confirmationNumber">Confirmation / Booking #</Label>
+              <div className="relative">
+                <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="confirmationNumber"
+                  value={formData.confirmationNumber}
+                  onChange={(e) => setFormData({ ...formData, confirmationNumber: e.target.value })}
+                  placeholder="ABC123"
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Booking/Confirmation Link */}
+            <div className="space-y-2">
+              <Label>Booking Link</Label>
+              <div className="relative">
+                <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="url"
+                  value={formData.bookingLink}
+                  onChange={(e) => setFormData({ ...formData, bookingLink: e.target.value })}
+                  placeholder="Link to booking or confirmation page"
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            
+            {/* Screenshots */}
+            <div className="space-y-2">
+              <Label>Screenshots</Label>
+              <input
+                ref={bookingInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => handleImageUpload(e, setBookingScreenshots)}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full border-dashed"
+                onClick={() => bookingInputRef.current?.click()}
+              >
+                <ImagePlus className="w-4 h-4 mr-2" />
+                Add Screenshots
+              </Button>
+              
+              {bookingScreenshots.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {bookingScreenshots.map((img, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={img}
+                        alt={`Screenshot ${index + 1}`}
+                        className="w-16 h-16 object-cover rounded-md border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index, setBookingScreenshots)}
+                        className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-2 pt-4">
