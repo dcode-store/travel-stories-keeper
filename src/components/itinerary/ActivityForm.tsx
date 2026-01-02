@@ -125,18 +125,35 @@ export function ActivityForm({ open, onOpenChange, onSubmit, initialData, select
             />
           </div>
 
-          {/* Primary: Time */}
-          <div className="space-y-2">
-            <Label htmlFor="time" className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5" /> What time?
-            </Label>
-            <Input
-              id="time"
-              type="time"
-              value={formData.time}
-              onChange={e => setFormData(prev => ({ ...prev, time: e.target.value }))}
-              className="bg-muted/50 border-0 focus-visible:ring-primary w-32"
-            />
+          {/* Primary: Time & Cost */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="time" className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" /> What time?
+              </Label>
+              <Input
+                id="time"
+                type="time"
+                value={formData.time}
+                onChange={e => setFormData(prev => ({ ...prev, time: e.target.value }))}
+                className="bg-muted/50 border-0 focus-visible:ring-primary"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cost" className="flex items-center gap-1.5">
+                <span className="text-sm">💰</span> Cost ({currency})
+              </Label>
+              <Input
+                id="cost"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.cost ?? ''}
+                onChange={e => setFormData(prev => ({ ...prev, cost: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                placeholder="0.00"
+                className="bg-muted/50 border-0 focus-visible:ring-primary"
+              />
+            </div>
           </div>
 
           {/* Primary: Notes */}
@@ -201,22 +218,6 @@ export function ActivityForm({ open, onOpenChange, onSubmit, initialData, select
                 />
               </div>
 
-              {/* Cost */}
-              <div className="space-y-2">
-                <Label htmlFor="cost" className="flex items-center gap-1.5">
-                  <span className="text-sm">💰</span> Cost ({currency})
-                </Label>
-                <Input
-                  id="cost"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.cost ?? ''}
-                  onChange={e => setFormData(prev => ({ ...prev, cost: e.target.value ? parseFloat(e.target.value) : undefined }))}
-                  placeholder="0.00"
-                  className="bg-muted/50 border-0"
-                />
-              </div>
 
               {/* Booked toggle */}
               <div className="flex items-center justify-between py-2">
