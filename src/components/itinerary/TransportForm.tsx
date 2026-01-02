@@ -287,6 +287,23 @@ export function TransportForm({
                 />
               </div>
             </div>
+
+            {/* Cost */}
+            <div className="space-y-2">
+              <Label htmlFor="cost">Cost</Label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="cost"
+                  type="number"
+                  step="0.01"
+                  value={formData.cost}
+                  onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+                  placeholder="0.00"
+                  className="pl-10"
+                />
+              </div>
+            </div>
           </div>
 
           {/* ADDITIONAL DETAILS - Collapsible */}
@@ -355,23 +372,6 @@ export function TransportForm({
                       className="pl-10"
                     />
                   </div>
-                </div>
-              </div>
-
-              {/* Cost */}
-              <div className="space-y-2">
-                <Label htmlFor="cost">Cost</Label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="cost"
-                    type="number"
-                    step="0.01"
-                    value={formData.cost}
-                    onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                    placeholder="0.00"
-                    className="pl-10"
-                  />
                 </div>
               </div>
 
