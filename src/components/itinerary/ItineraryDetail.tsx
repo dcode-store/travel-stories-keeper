@@ -1,7 +1,7 @@
 import { useState, useMemo, DragEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Itinerary, Activity as ActivityType, Accommodation, Transportation, getItineraryDates, getActivitiesForDate, TRANSPORTATION_TYPES, calculateDuration } from '@/types/itinerary';
 import { ActivityForm } from './ActivityForm';
-import { ExpenseSummary } from './ExpenseSummary';
 import { AccommodationForm } from './AccommodationForm';
 import { TransportForm } from './TransportForm';
 import { Button } from '@/components/ui/button';
@@ -20,8 +20,30 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ArrowLeft, Pencil, Trash2, MapPin, Calendar, Clock, DollarSign, Hotel, Plane, Activity, Plus, ChevronDown, Phone, Mail, Globe, ExternalLink, Moon, Link, Ticket, ClipboardCheck, ArrowRight, GripVertical } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, MapPin, Calendar, Clock, DollarSign, Hotel, Plane, Activity, Plus, ChevronDown, Phone, Mail, Globe, ExternalLink, Moon, Link, Ticket, ClipboardCheck, ArrowRight, GripVertical, ChevronRight } from 'lucide-react';
 import { format, isToday, isPast, startOfDay, differenceInDays, isWithinInterval } from 'date-fns';
+import { Link as RouterLink } from 'react-router-dom';
+
+// Expense Link Component
+function ExpenseLink({ itineraryId }: { itineraryId: string }) {
+  return (
+    <RouterLink 
+      to={`/expenses?tripId=${itineraryId}`}
+      className="mb-8 flex items-center justify-between p-4 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors group"
+    >
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-full bg-primary/10">
+          <DollarSign className="w-5 h-5 text-primary" />
+        </div>
+        <div>
+          <h3 className="font-medium">Expenses & Budget</h3>
+          <p className="text-sm text-muted-foreground">View spending breakdown and charts</p>
+        </div>
+      </div>
+      <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+    </RouterLink>
+  );
+}
 
 interface ItineraryDetailProps {
   itinerary: Itinerary;
@@ -276,10 +298,8 @@ export function ItineraryDetail({
           )}
         </div>
 
-        {/* Expense Summary */}
-        <div className="mb-8">
-          <ExpenseSummary itinerary={itinerary} />
-        </div>
+        {/* View Expenses Link */}
+        <ExpenseLink itineraryId={itinerary.id} />
 
         {/* Content Tabs */}
         <Tabs defaultValue="schedule" className="space-y-6">
