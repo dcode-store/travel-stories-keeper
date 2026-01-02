@@ -52,7 +52,7 @@ export default function Expenses() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
-        <ExpenseSummary itinerary={itinerary} />
+        <ExpenseSummary itinerary={itinerary} showCharts />
       </main>
     </div>
   );

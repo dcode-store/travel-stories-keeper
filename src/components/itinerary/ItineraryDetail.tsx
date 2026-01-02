@@ -2,6 +2,7 @@ import { useState, useMemo, DragEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Itinerary, Activity as ActivityType, Accommodation, Transportation, getItineraryDates, getActivitiesForDate, TRANSPORTATION_TYPES, calculateDuration } from '@/types/itinerary';
 import { ActivityForm } from './ActivityForm';
+import { ExpenseSummary } from './ExpenseSummary';
 import { AccommodationForm } from './AccommodationForm';
 import { TransportForm } from './TransportForm';
 import { Button } from '@/components/ui/button';
@@ -29,18 +30,12 @@ function ExpenseLink({ itineraryId }: { itineraryId: string }) {
   return (
     <RouterLink 
       to={`/expenses?tripId=${itineraryId}`}
-      className="mb-8 flex items-center justify-between p-4 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors group"
+      className="mt-4 flex items-center justify-between p-3 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors group"
     >
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-full bg-primary/10">
-          <DollarSign className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <h3 className="font-medium">Expenses & Budget</h3>
-          <p className="text-sm text-muted-foreground">View spending breakdown and charts</p>
-        </div>
-      </div>
-      <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+      <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground">
+        View detailed charts & analytics
+      </span>
+      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
     </RouterLink>
   );
 }
@@ -298,8 +293,11 @@ export function ItineraryDetail({
           )}
         </div>
 
-        {/* View Expenses Link */}
-        <ExpenseLink itineraryId={itinerary.id} />
+        {/* Expense Summary */}
+        <div className="mb-8">
+          <ExpenseSummary itinerary={itinerary} />
+          <ExpenseLink itineraryId={itinerary.id} />
+        </div>
 
         {/* Content Tabs */}
         <Tabs defaultValue="schedule" className="space-y-6">

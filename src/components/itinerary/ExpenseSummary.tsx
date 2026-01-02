@@ -6,8 +6,10 @@ import { Progress } from '@/components/ui/progress';
 import { DollarSign, TrendingDown, TrendingUp, Users, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { startOfDay } from 'date-fns';
 import { ExpenseCharts } from './ExpenseCharts';
+
 interface ExpenseSummaryProps {
   itinerary: Itinerary;
+  showCharts?: boolean;
 }
 
 interface ExpenseBreakdown {
@@ -17,7 +19,7 @@ interface ExpenseBreakdown {
   total: number;
 }
 
-export function ExpenseSummary({ itinerary }: ExpenseSummaryProps) {
+export function ExpenseSummary({ itinerary, showCharts = false }: ExpenseSummaryProps) {
   const today = startOfDay(new Date());
   const tripStart = startOfDay(new Date(itinerary.startDate));
   const tripEnd = startOfDay(new Date(itinerary.endDate));
@@ -181,10 +183,12 @@ export function ExpenseSummary({ itinerary }: ExpenseSummaryProps) {
           </div>
         )}
 
-        {/* Expense Charts */}
-        <div className="pt-3 border-t">
-          <ExpenseCharts itinerary={itinerary} />
-        </div>
+        {/* Expense Charts - Only when showCharts is true */}
+        {showCharts && (
+          <div className="pt-3 border-t">
+            <ExpenseCharts itinerary={itinerary} />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
