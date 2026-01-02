@@ -2,13 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Memory, MemoryFormData, MOOD_OPTIONS } from '@/types/memory';
 import { X, Plus, ImagePlus, ArrowLeft, ArrowRight, Check, MapPin, Tag, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { RichTextEditor } from './RichTextEditor';
 
 interface MemoryFormProps {
   open: boolean;
@@ -74,6 +74,7 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
   });
   const [tagInput, setTagInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [contentImages, setContentImages] = useState<string[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -88,6 +89,7 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
           tags: initialData.tags || [],
           mood: initialData.mood || '',
         });
+        setContentImages([]);
       } else {
         setFormData({
           title: '',
@@ -99,11 +101,18 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
           tags: [],
           mood: '',
         });
+        setContentImages([]);
       }
       setCurrentStep(0);
       setTagInput('');
     }
   }, [initialData, open]);
+
+  const handleAddContentImage = useCallback((image: string) => {
+    setContentImages(prev => [...prev, image]);
+    // Also add to main images array
+    setFormData(prev => ({ ...prev, images: [...prev.images, image] }));
+  }, []);
 
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -209,12 +218,12 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
       case 'content':
         return (
           <div className="space-y-4">
-            <Textarea
+            <RichTextEditor
               value={formData.content}
-              onChange={e => setFormData(prev => ({ ...prev, content: e.target.value }))}
-              placeholder="Write about this memory..."
-              className="min-h-[180px] resize-none text-base"
-              autoFocus
+              onChange={(value) => setFormData(prev => ({ ...prev, content: value }))}
+              placeholder="Write about this memory... Add photos inline to tell your story visually."
+              inlineImages={contentImages}
+              onAddInlineImage={handleAddContentImage}
             />
           </div>
         );

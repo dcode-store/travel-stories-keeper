@@ -10,7 +10,8 @@ import {
   Film,
   Sparkles,
   Lock,
-  ChevronRight
+  ChevronRight,
+  ExternalLink
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { exportToPDF } from '@/lib/exportPDF';
@@ -85,6 +86,33 @@ export function ShareDialog({ open, onOpenChange, memories, selectedMemory }: Sh
     });
   };
 
+  const handleRedditShare = () => {
+    const toShare = selectedMemory ? selectedMemory : memories[0];
+    if (!toShare) return;
+    
+    const title = encodeURIComponent(toShare.title);
+    const text = encodeURIComponent(toShare.content.slice(0, 300) + (toShare.content.length > 300 ? '...' : ''));
+    const redditUrl = `https://www.reddit.com/submit?title=${title}&text=${text}`;
+    window.open(redditUrl, '_blank');
+    toast({
+      title: 'Opening Reddit',
+      description: 'A new tab will open to share your memory on Reddit.',
+    });
+  };
+
+  const handleInstagramShare = () => {
+    const toShare = selectedMemory ? selectedMemory : memories[0];
+    if (!toShare) return;
+    
+    // Copy caption to clipboard for Instagram
+    const caption = `${toShare.title}\n\n${toShare.content}\n\n${toShare.tags?.map(t => `#${t}`).join(' ') || ''}`;
+    navigator.clipboard.writeText(caption);
+    toast({
+      title: 'Caption copied!',
+      description: 'Open Instagram and paste the caption. Your photos are in your gallery.',
+    });
+  };
+
   const shareOptions: ShareOption[] = [
     {
       id: 'preview',
@@ -101,25 +129,31 @@ export function ShareDialog({ open, onOpenChange, memories, selectedMemory }: Sh
       action: handleExportPDF,
     },
     {
-      id: 'instagram-post',
+      id: 'instagram',
       icon: <Instagram className="w-5 h-5" />,
-      title: 'Instagram Post',
-      description: 'Format your memory for Instagram feed',
-      isPremium: true,
-      action: handleInstagramPost,
+      title: 'Share to Instagram',
+      description: 'Copy caption with hashtags to clipboard',
+      action: handleInstagramShare,
+    },
+    {
+      id: 'reddit',
+      icon: <ExternalLink className="w-5 h-5" />,
+      title: 'Share to Reddit',
+      description: 'Post your memory to a subreddit',
+      action: handleRedditShare,
     },
     {
       id: 'insta-story',
       icon: <LayoutGrid className="w-5 h-5" />,
-      title: 'Instagram Story',
-      description: 'Create a collage or use AI templates',
+      title: 'AI Instagram Story',
+      description: 'Create a collage with AI templates',
       isPremium: true,
       action: handleInstaStory,
     },
     {
       id: 'reel-tiktok',
       icon: <Film className="w-5 h-5" />,
-      title: 'Reel / TikTok Video',
+      title: 'AI Reel / TikTok',
       description: 'Generate a short video with AI',
       isPremium: true,
       action: handleReelTikTok,

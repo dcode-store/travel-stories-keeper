@@ -161,14 +161,9 @@
     box-shadow: 0 4px 20px hsl(var(--memory-shadow) / 0.3);
   }
 
-  /* Smooth scroll behavior */
+  /* Smooth scroll behavior - simplified for normal scrolling */
   .scroll-smooth-timeline {
     scroll-behavior: smooth;
-    scroll-snap-type: y mandatory;
-  }
-
-  .scroll-snap-center {
-    scroll-snap-align: center;
   }
 }
 

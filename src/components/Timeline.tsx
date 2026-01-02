@@ -73,15 +73,13 @@ export function Timeline({ memories, onEdit, onDelete, onShare }: TimelineProps)
       {/* Memories container */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-y-auto scroll-smooth-timeline px-4 md:px-8 lg:px-12 py-[40vh]"
-        style={{ maxHeight: '100vh' }}
+        className="flex-1 overflow-y-auto scroll-smooth-timeline px-4 md:px-8 lg:px-12 py-12"
       >
-        <div className="max-w-2xl mx-auto space-y-8">
+        <div className="max-w-2xl mx-auto space-y-6">
           {memories.map((memory, index) => (
             <div 
               key={memory.id} 
               data-memory-card
-              className="scroll-snap-center"
             >
               <MemoryCard
                 memory={memory}
