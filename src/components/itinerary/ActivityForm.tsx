@@ -201,6 +201,23 @@ export function ActivityForm({ open, onOpenChange, onSubmit, initialData, select
                 />
               </div>
 
+              {/* Cost */}
+              <div className="space-y-2">
+                <Label htmlFor="cost" className="flex items-center gap-1.5">
+                  <span className="text-sm">💰</span> Cost ({currency})
+                </Label>
+                <Input
+                  id="cost"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.cost ?? ''}
+                  onChange={e => setFormData(prev => ({ ...prev, cost: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                  placeholder="0.00"
+                  className="bg-muted/50 border-0"
+                />
+              </div>
+
               {/* Booked toggle */}
               <div className="flex items-center justify-between py-2">
                 <div>
