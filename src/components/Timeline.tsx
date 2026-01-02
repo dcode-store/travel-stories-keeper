@@ -87,6 +87,12 @@ export function Timeline({ memories, onEdit, onDelete, onShare }: TimelineProps)
                 onEdit={() => onEdit(memory)}
                 onDelete={() => onDelete(memory.id)}
                 onShare={onShare ? () => onShare(memory) : undefined}
+                onClick={() => {
+                  setActiveIndex(index);
+                  const container = containerRef.current;
+                  const cards = container?.querySelectorAll('[data-memory-card]');
+                  cards?.[index]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}
               />
             </div>
           ))}

@@ -91,6 +91,8 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
           mood: initialData.mood || '',
         });
         setContentImages([]);
+        // When editing, start at the 'content' step (Story)
+        setCurrentStep(2);
       } else {
         setFormData({
           title: '',
@@ -103,8 +105,8 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
           mood: '',
         });
         setContentImages([]);
+        setCurrentStep(0);
       }
-      setCurrentStep(0);
       setTagInput('');
     }
   }, [initialData, open]);
@@ -395,7 +397,7 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
               </>
             ) : (
               <>
-                {STEPS[safeStep].id === 'content' || STEPS[safeStep].id === 'photos' || STEPS[safeStep].id === 'location' ? 'Skip' : 'Next'}
+                Next
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

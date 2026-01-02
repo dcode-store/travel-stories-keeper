@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Memory } from '@/types/memory';
 import { ImageStack } from './ImageStack';
+import { SimpleMarkdown } from './SimpleMarkdown';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2, Calendar, Play, Pause, Volume2, VolumeX, Share2 } from 'lucide-react';
@@ -22,9 +23,10 @@ interface MemoryCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onShare?: () => void;
+  onClick?: () => void;
 }
 
-export function MemoryCard({ memory, isActive, onEdit, onDelete, onShare }: MemoryCardProps) {
+export function MemoryCard({ memory, isActive, onEdit, onDelete, onShare, onClick }: MemoryCardProps) {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isVideoMuted, setIsVideoMuted] = useState(true);
 
@@ -35,11 +37,18 @@ export function MemoryCard({ memory, isActive, onEdit, onDelete, onShare }: Memo
     day: 'numeric',
   });
 
+  const handleCardClick = () => {
+    if (!isActive && onClick) {
+      onClick();
+    }
+  };
+
   return (
     <Card
+      onClick={handleCardClick}
       className={`
         group memory-card p-6 md:p-8 border-0 shadow-lg bg-card/80 backdrop-blur-sm
-        transition-all duration-500 ease-out
+        transition-all duration-500 ease-out min-h-[180px]
         ${isActive 
           ? 'memory-card-expanded shadow-xl ring-1 ring-primary/10' 
           : 'memory-card-collapsed hover:opacity-80 cursor-pointer'
@@ -61,9 +70,8 @@ export function MemoryCard({ memory, isActive, onEdit, onDelete, onShare }: Memo
           </div>
         </div>
         
-        {/* Actions - only show when active */}
-        {isActive && (
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Actions - show on hover or when active */}
+        <div className={`flex items-center gap-1 transition-opacity ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
             {onShare && (
               <Button
                 variant="ghost"
@@ -107,8 +115,7 @@ export function MemoryCard({ memory, isActive, onEdit, onDelete, onShare }: Memo
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Content - only fully visible when active */}
@@ -161,11 +168,8 @@ export function MemoryCard({ memory, isActive, onEdit, onDelete, onShare }: Memo
         )}
 
         {/* Journal content */}
-        <div className={`
-          prose prose-sm max-w-none text-foreground/90
-          ${isActive ? '' : 'line-clamp-3'}
-        `}>
-          <p className="whitespace-pre-wrap leading-relaxed">{memory.content}</p>
+        <div className={isActive ? '' : 'line-clamp-3'}>
+          <SimpleMarkdown content={memory.content} />
         </div>
       </div>
     </Card>
