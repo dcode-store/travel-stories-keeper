@@ -321,6 +321,7 @@ export function ItineraryDetail({
                       onAddActivity={handleAddActivity}
                       onEditActivity={handleEditActivity}
                       onDeleteActivity={onDeleteActivity}
+                      onUpdateActivityCost={(activityId, cost) => onUpdateActivity(activityId, { cost })}
                       onDragStart={handleDragStart}
                       onDragEnd={handleDragEnd}
                       onDragOver={handleDragOver}
@@ -349,6 +350,7 @@ export function ItineraryDetail({
                   onAddActivity={handleAddActivity}
                   onEditActivity={handleEditActivity}
                   onDeleteActivity={onDeleteActivity}
+                  onUpdateActivityCost={(activityId, cost) => onUpdateActivity(activityId, { cost })}
                   onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}
                   onDragOver={handleDragOver}
@@ -952,6 +954,7 @@ interface DayCardProps {
   onAddActivity: (date: string) => void;
   onEditActivity: (activity: ActivityType) => void;
   onDeleteActivity: (activityId: string) => void;
+  onUpdateActivityCost: (activityId: string, cost: number | undefined) => void;
   onDragStart: (activityId: string) => void;
   onDragEnd: () => void;
   onDragOver: (e: DragEvent<HTMLDivElement>, date: string) => void;
@@ -971,6 +974,7 @@ function DayCard({
   onAddActivity,
   onEditActivity,
   onDeleteActivity,
+  onUpdateActivityCost,
   onDragStart,
   onDragEnd,
   onDragOver,
@@ -980,6 +984,7 @@ function DayCard({
   isDragging,
 }: DayCardProps) {
   const isEmpty = activities.length === 0;
+  const currency = itinerary.currency || '$';
   
   return (
     <Card 
@@ -1062,9 +1067,25 @@ function DayCard({
                     )}
                   </div>
                   <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 opacity-0 group-hover/activity:opacity-100 transition-opacity">
+                      <span className="text-xs text-muted-foreground">{currency}</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={activity.cost ?? ''}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          onUpdateActivityCost(activity.id, e.target.value ? parseFloat(e.target.value) : undefined);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        placeholder="0"
+                        className="w-16 h-7 px-2 text-sm bg-background border border-input rounded text-right focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
                     {activity.cost && (
-                      <span className="text-sm text-muted-foreground">
-                        {activity.currency || itinerary.currency || '$'}{activity.cost}
+                      <span className="text-sm text-muted-foreground group-hover/activity:hidden">
+                        {currency}{activity.cost}
                       </span>
                     )}
                     <Button
