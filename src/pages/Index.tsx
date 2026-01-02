@@ -5,10 +5,12 @@ import { AppHeader } from '@/components/AppHeader';
 import { Timeline } from '@/components/Timeline';
 import { MemoryForm } from '@/components/MemoryForm';
 import { ShareDialog } from '@/components/share/ShareDialog';
+import { MemoriesMap } from '@/components/MemoriesMap';
 import { Memory, MemoryFormData } from '@/types/memory';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Plus, Share2, BookOpen } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Share2, BookOpen, Map, List } from 'lucide-react';
 
 const Index = () => {
   const { memories, isLoading, addMemory, updateMemory, deleteMemory } = useMemories();
@@ -121,12 +123,32 @@ const Index = () => {
               </Button>
             </div>
           ) : (
-            <Timeline 
-              memories={memories}
-              onEdit={handleEditMemory}
-              onDelete={handleDeleteMemory}
-              onShare={handleShare}
-            />
+            <Tabs defaultValue="timeline" className="w-full">
+              <TabsList className="mb-6">
+                <TabsTrigger value="timeline" className="gap-2">
+                  <List className="w-4 h-4" />
+                  Timeline
+                </TabsTrigger>
+                <TabsTrigger value="map" className="gap-2">
+                  <Map className="w-4 h-4" />
+                  Map View
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="timeline">
+                <Timeline 
+                  memories={memories}
+                  onEdit={handleEditMemory}
+                  onDelete={handleDeleteMemory}
+                  onShare={handleShare}
+                />
+              </TabsContent>
+              <TabsContent value="map">
+                <MemoriesMap 
+                  memories={memories}
+                  onSelectMemory={(memory) => handleEditMemory(memory)}
+                />
+              </TabsContent>
+            </Tabs>
           )}
         </div>
       </main>
