@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { DollarSign, TrendingDown, TrendingUp, Users, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { startOfDay } from 'date-fns';
-
+import { ExpenseCharts } from './ExpenseCharts';
 interface ExpenseSummaryProps {
   itinerary: Itinerary;
 }
@@ -180,6 +180,11 @@ export function ExpenseSummary({ itinerary }: ExpenseSummaryProps) {
             </div>
           </div>
         )}
+
+        {/* Expense Charts */}
+        <div className="pt-3 border-t">
+          <ExpenseCharts itinerary={itinerary} />
+        </div>
       </CardContent>
     </Card>
   );
