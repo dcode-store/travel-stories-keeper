@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +21,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ArrowLeft, Pencil, Trash2, MapPin, Calendar, Clock, DollarSign, Hotel, Plane, Activity, Plus, ChevronDown, Phone, Mail, Globe, ExternalLink, Moon, Link, Ticket, ClipboardCheck, ArrowRight, GripVertical, ChevronRight } from 'lucide-react';
 import { format, isToday, isPast, startOfDay, differenceInDays, isWithinInterval } from 'date-fns';
@@ -1003,127 +1012,171 @@ function DayCard({
 }: DayCardProps) {
   const isEmpty = activities.length === 0;
   const currency = itinerary.currency || '$';
+  const [costModalOpen, setCostModalOpen] = useState(false);
+  const [editingCostActivity, setEditingCostActivity] = useState<ActivityType | null>(null);
+  const [costValue, setCostValue] = useState('');
+
+  const handleOpenCostModal = (e: React.MouseEvent, activity: ActivityType) => {
+    e.stopPropagation();
+    setEditingCostActivity(activity);
+    setCostValue(activity.cost?.toString() ?? '');
+    setCostModalOpen(true);
+  };
+
+  const handleSaveCost = () => {
+    if (editingCostActivity) {
+      onUpdateActivityCost(editingCostActivity.id, costValue ? parseFloat(costValue) : undefined);
+    }
+    setCostModalOpen(false);
+    setEditingCostActivity(null);
+    setCostValue('');
+  };
   
   return (
-    <Card 
-      className={`group transition-all ${isPastDay ? 'opacity-60' : isToday ? 'ring-2 ring-primary/50' : ''} ${
-        isDragOver ? 'ring-2 ring-primary bg-primary/5' : ''
-      } ${isDragging ? 'border-dashed' : ''}`}
-      onDragOver={(e) => onDragOver(e, date)}
-      onDragLeave={onDragLeave}
-      onDrop={(e) => onDrop(e, date)}
-    >
-      <CardHeader className={`pb-3 ${isEmpty && !isPastDay ? 'py-4' : ''}`}>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-3 text-lg">
-            <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-              isToday ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'
-            }`}>
-              {dayNumber}
-            </span>
-            <span className="flex items-center gap-2">
-              {format(new Date(date), 'EEEE, MMMM d')}
-              {isToday && <Badge className="text-xs">Today</Badge>}
-            </span>
-          </div>
-          {!isPastDay && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onAddActivity(date)}
-              className="text-muted-foreground hover:text-primary transition-all"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              {isEmpty ? 'Add activity' : 'Add'}
-            </Button>
-          )}
-        </CardTitle>
-      </CardHeader>
-      {(activities.length > 0 || isPastDay || isDragOver) && (
-        <CardContent>
-          {activities.length === 0 && isPastDay && !isDragOver ? (
-            <p className="text-sm text-muted-foreground py-2 text-center">No activities</p>
-          ) : activities.length === 0 && isDragOver ? (
-            <div className="py-6 text-center border-2 border-dashed border-primary/30 rounded-lg">
-              <p className="text-sm text-primary">Drop activity here</p>
+    <>
+      <Card 
+        className={`group transition-all ${isPastDay ? 'opacity-60' : isToday ? 'ring-2 ring-primary/50' : ''} ${
+          isDragOver ? 'ring-2 ring-primary bg-primary/5' : ''
+        } ${isDragging ? 'border-dashed' : ''}`}
+        onDragOver={(e) => onDragOver(e, date)}
+        onDragLeave={onDragLeave}
+        onDrop={(e) => onDrop(e, date)}
+      >
+        <CardHeader className={`pb-3 ${isEmpty && !isPastDay ? 'py-4' : ''}`}>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-3 text-lg">
+              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                isToday ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'
+              }`}>
+                {dayNumber}
+              </span>
+              <span className="flex items-center gap-2">
+                {format(new Date(date), 'EEEE, MMMM d')}
+                {isToday && <Badge className="text-xs">Today</Badge>}
+              </span>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {activities.map(activity => (
-                <div 
-                  key={activity.id}
-                  draggable
-                  onDragStart={() => onDragStart(activity.id)}
-                  onDragEnd={onDragEnd}
-                  className="flex gap-3 p-3 rounded-lg bg-muted/50 group/activity cursor-grab hover:bg-muted transition-colors active:cursor-grabbing"
-                  onClick={() => onEditActivity(activity)}
-                >
-                  <div className="flex items-center">
-                    <GripVertical className="w-4 h-4 text-muted-foreground/50 mr-1" />
-                    <Activity className="w-4 h-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
+            {!isPastDay && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onAddActivity(date)}
+                className="text-muted-foreground hover:text-primary transition-all"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                {isEmpty ? 'Add activity' : 'Add'}
+              </Button>
+            )}
+          </CardTitle>
+        </CardHeader>
+        {(activities.length > 0 || isPastDay || isDragOver) && (
+          <CardContent>
+            {activities.length === 0 && isPastDay && !isDragOver ? (
+              <p className="text-sm text-muted-foreground py-2 text-center">No activities</p>
+            ) : activities.length === 0 && isDragOver ? (
+              <div className="py-6 text-center border-2 border-dashed border-primary/30 rounded-lg">
+                <p className="text-sm text-primary">Drop activity here</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {activities.map(activity => (
+                  <div 
+                    key={activity.id}
+                    draggable
+                    onDragStart={() => onDragStart(activity.id)}
+                    onDragEnd={onDragEnd}
+                    className="flex gap-3 p-3 rounded-lg bg-muted/50 group/activity cursor-grab hover:bg-muted transition-colors active:cursor-grabbing"
+                    onClick={() => onEditActivity(activity)}
+                  >
+                    <div className="flex items-center">
+                      <GripVertical className="w-4 h-4 text-muted-foreground/50 mr-1" />
+                      <Activity className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{activity.name}</span>
+                        {activity.booked && <Badge variant="outline" className="text-xs">Booked</Badge>}
+                      </div>
+                      {activity.time && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {activity.time}
+                          {activity.endTime && ` - ${activity.endTime}`}
+                        </p>
+                      )}
+                      {activity.location && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {activity.location}
+                        </p>
+                      )}
+                      {activity.description && (
+                        <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{activity.name}</span>
-                      {activity.booked && <Badge variant="outline" className="text-xs">Booked</Badge>}
-                    </div>
-                    {activity.time && (
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {activity.time}
-                        {activity.endTime && ` - ${activity.endTime}`}
-                      </p>
-                    )}
-                    {activity.location && (
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {activity.location}
-                      </p>
-                    )}
-                    {activity.description && (
-                      <p className="text-sm text-muted-foreground mt-1">{activity.description}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 opacity-0 group-hover/activity:opacity-100 transition-opacity">
-                      <span className="text-xs text-muted-foreground">{currency}</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={activity.cost ?? ''}
-                        onChange={(e) => {
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => handleOpenCostModal(e, activity)}
+                        className="h-7 px-2 text-xs gap-1"
+                      >
+                        <DollarSign className="w-3 h-3" />
+                        {activity.cost ? `${currency}${activity.cost}` : 'Cost'}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="opacity-0 group-hover/activity:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                        onClick={(e) => {
                           e.stopPropagation();
-                          onUpdateActivityCost(activity.id, e.target.value ? parseFloat(e.target.value) : undefined);
+                          onDeleteActivity(activity.id);
                         }}
-                        onClick={(e) => e.stopPropagation()}
-                        placeholder="0"
-                        className="w-16 h-7 px-2 text-sm bg-background border border-input rounded text-right focus:outline-none focus:ring-1 focus:ring-primary"
-                      />
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
-                    {activity.cost && (
-                      <span className="text-sm text-muted-foreground group-hover/activity:hidden">
-                        {currency}{activity.cost}
-                      </span>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="opacity-0 group-hover/activity:opacity-100 transition-opacity text-destructive hover:text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteActivity(activity.id);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Cost Edit Modal */}
+      <Dialog open={costModalOpen} onOpenChange={setCostModalOpen}>
+        <DialogContent className="sm:max-w-[320px]">
+          <DialogHeader>
+            <DialogTitle>Set Activity Cost</DialogTitle>
+            <DialogDescription>
+              {editingCostActivity?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">{currency}</span>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={costValue}
+                onChange={(e) => setCostValue(e.target.value)}
+                placeholder="0.00"
+                className="flex-1"
+                autoFocus
+              />
             </div>
-          )}
-        </CardContent>
-      )}
-    </Card>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCostModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveCost}>
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
