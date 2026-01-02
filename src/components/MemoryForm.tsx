@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Memory, MemoryFormData, MOOD_OPTIONS } from '@/types/memory';
-import { X, Plus, ImagePlus, ArrowLeft, ArrowRight, Check, MapPin, Tag, Video } from 'lucide-react';
+import { X, Plus, ArrowLeft, ArrowRight, Check, MapPin, Tag, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RichTextEditor } from './RichTextEditor';
+import { DraggablePhotoGrid } from './DraggablePhotoGrid';
 
 interface MemoryFormProps {
   open: boolean;
@@ -139,6 +140,10 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
     setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
   };
 
+  const reorderImages = useCallback((newImages: string[]) => {
+    setFormData(prev => ({ ...prev, images: newImages }));
+  }, []);
+
   const addTag = () => {
     const tag = tagInput.trim().toLowerCase();
     if (tag && !formData.tags?.includes(tag)) {
@@ -230,33 +235,13 @@ export function MemoryForm({ open, onOpenChange, onSubmit, initialData }: Memory
 
       case 'photos':
         return (
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-3">
-              {formData.images.map((img, i) => (
-                <div key={i} className="relative group">
-                  <img src={img} alt={`Upload ${i + 1}`} className="w-24 h-24 object-cover rounded-xl" />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(i)}
-                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-              <label className="w-24 h-24 border-2 border-dashed border-muted-foreground/30 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all">
-                <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={isUploading} />
-                {isUploading ? (
-                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <ImagePlus className="w-6 h-6 text-muted-foreground mb-1" />
-                    <span className="text-xs text-muted-foreground">Add</span>
-                  </>
-                )}
-              </label>
-            </div>
-          </div>
+          <DraggablePhotoGrid
+            images={formData.images}
+            onReorder={reorderImages}
+            onRemove={removeImage}
+            onUpload={handleImageUpload}
+            isUploading={isUploading}
+          />
         );
 
       case 'location':
