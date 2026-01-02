@@ -1,6 +1,7 @@
 import { useState, useMemo, DragEvent } from 'react';
 import { Itinerary, Activity as ActivityType, Accommodation, Transportation, getItineraryDates, getActivitiesForDate, TRANSPORTATION_TYPES, calculateDuration } from '@/types/itinerary';
 import { ActivityForm } from './ActivityForm';
+import { ExpenseSummary } from './ExpenseSummary';
 import { AccommodationForm } from './AccommodationForm';
 import { TransportForm } from './TransportForm';
 import { Button } from '@/components/ui/button';
@@ -273,6 +274,11 @@ export function ItineraryDetail({
               ))}
             </div>
           )}
+        </div>
+
+        {/* Expense Summary */}
+        <div className="mb-8">
+          <ExpenseSummary itinerary={itinerary} />
         </div>
 
         {/* Content Tabs */}

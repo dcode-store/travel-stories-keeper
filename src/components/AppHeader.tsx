@@ -6,8 +6,8 @@ export function AppHeader() {
   const location = useLocation();
 
   const navItems = [
-    { path: '/', label: 'Memories', icon: BookOpen },
     { path: '/trips', label: 'Trips', icon: Plane },
+    { path: '/memories', label: 'Memories', icon: BookOpen },
   ];
 
   return (
