@@ -160,7 +160,7 @@ export function MemoriesMap({ memories, onSelectMemory }: MemoriesMapProps) {
               Save & Continue
             </Button>
             <a
-              href="https://mapbox.com/"
+              href="https://console.mapbox.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
