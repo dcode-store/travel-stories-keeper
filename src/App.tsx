@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Itineraries from "./pages/Itineraries";
 import Expenses from "./pages/Expenses";
+import TravelMap from "./pages/TravelMap";
+import BucketList from "./pages/BucketList";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +23,8 @@ const App = () => (
           <Route path="/trips" element={<Itineraries />} />
           <Route path="/memories" element={<Index />} />
           <Route path="/expenses" element={<Expenses />} />
+          <Route path="/travel-map" element={<TravelMap />} />
+          <Route path="/bucket-list" element={<BucketList />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
