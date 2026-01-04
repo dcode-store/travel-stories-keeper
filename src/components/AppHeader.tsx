@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Plane, Globe, Star, Menu } from 'lucide-react';
+import { BookOpen, Plane, Globe, Star, Menu, WifiOff, Wifi } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,9 +9,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export function AppHeader() {
   const location = useLocation();
+  const { isOnline, wasOffline } = useOnlineStatus();
 
   const navItems = [
     { path: '/trips', label: 'Trips', icon: Plane },
@@ -52,30 +58,68 @@ export function AppHeader() {
           ))}
         </nav>
 
-        {/* Mobile Navigation */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon">
-              <Menu className="w-5 h-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            {navItems.map(item => (
-              <DropdownMenuItem key={item.path} asChild>
-                <Link
-                  to={item.path}
-                  className={cn(
-                    'flex items-center gap-3 w-full',
-                    isActive(item.path) && 'text-primary font-medium'
-                  )}
-                >
-                  <item.icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                </Link>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Right side: Online Status + Mobile Nav */}
+        <div className="flex items-center gap-2">
+          {/* Online/Offline Indicator */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                className={cn(
+                  'flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all',
+                  isOnline
+                    ? wasOffline
+                      ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                      : 'bg-muted text-muted-foreground'
+                    : 'bg-orange-500/10 text-orange-600 dark:text-orange-400 animate-pulse'
+                )}
+              >
+                {isOnline ? (
+                  <>
+                    <Wifi className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">
+                      {wasOffline ? 'Back Online' : 'Online'}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <WifiOff className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Offline</span>
+                  </>
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {isOnline
+                ? 'Connected. Your data is synced.'
+                : 'Offline mode. Changes saved locally.'}
+            </TooltipContent>
+          </Tooltip>
+
+          {/* Mobile Navigation */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {navItems.map(item => (
+                <DropdownMenuItem key={item.path} asChild>
+                  <Link
+                    to={item.path}
+                    className={cn(
+                      'flex items-center gap-3 w-full',
+                      isActive(item.path) && 'text-primary font-medium'
+                    )}
+                  >
+                    <item.icon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );

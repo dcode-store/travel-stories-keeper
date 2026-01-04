@@ -7,71 +7,54 @@ import {
     Transportation
 } from '@/types/itinerary';
 import { useToast } from '@/hooks/use-toast';
+import { useOfflineStorage } from '@/hooks/useOfflineStorage';
 
 const STORAGE_KEY = 'journo-itineraries';
-const MAX_STORAGE_SIZE = 4 * 1024 * 1024; // 4MB limit
 
 const generateId = () => Math.random().toString(36).substring(2, 15);
 
-const getStorageSize = (data: unknown): number => {
-    return new Blob([JSON.stringify(data)]).size;
-};
-
 export function useItineraries() {
-    const [itineraries, setItineraries] = useState<Itinerary[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [storageError, setStorageError] = useState(false);
     const { toast } = useToast();
+    const {
+        items: storedItineraries,
+        isLoading,
+        error,
+        saveAll,
+        clearAll,
+    } = useOfflineStorage<Itinerary>({
+        storeName: 'itineraries',
+        localStorageKey: STORAGE_KEY,
+    });
 
-    // Load from localStorage on mount
-    useEffect(() => {
-        try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                try {
-                    const parsed = JSON.parse(stored);
-                    const sorted = parsed.sort((a: Itinerary, b: Itinerary) =>
-                        new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-                    );
-                    setItineraries(sorted);
-                } catch (e) {
-                    console.error('Failed to parse itineraries:', e);
-                    localStorage.removeItem(STORAGE_KEY);
-                }
-            }
-        } catch (e) {
-            console.error('Failed to access localStorage:', e);
-        }
-        setIsLoading(false);
-    }, []);
+    const [itineraries, setItineraries] = useState<Itinerary[]>([]);
 
-    // Save to localStorage whenever itineraries change
+    // Sync from IndexedDB
     useEffect(() => {
         if (!isLoading) {
-            try {
-                const dataSize = getStorageSize(itineraries);
-                if (dataSize > MAX_STORAGE_SIZE) {
-                    setStorageError(true);
-                    toast({
-                        title: 'Storage limit reached',
-                        description: 'Your itineraries are too large to save locally.',
-                        variant: 'destructive',
-                    });
-                    return;
-                }
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(itineraries));
-                setStorageError(false);
-            } catch (e) {
-                console.error('Failed to save itineraries:', e);
-                setStorageError(true);
-                toast({
-                    title: 'Storage error',
-                    description: 'Could not save itineraries. Storage may be full.',
-                    variant: 'destructive',
-                });
-            }
+            const sorted = [...storedItineraries].sort((a, b) =>
+                new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+            );
+            setItineraries(sorted);
         }
-    }, [itineraries, isLoading, toast]);
+    }, [storedItineraries, isLoading]);
+
+    // Save to IndexedDB whenever itineraries change
+    useEffect(() => {
+        if (!isLoading && itineraries.length > 0) {
+            saveAll(itineraries);
+        }
+    }, [itineraries, isLoading, saveAll]);
+
+    // Show error toast
+    useEffect(() => {
+        if (error) {
+            toast({
+                title: 'Storage error',
+                description: 'Could not save itineraries. Using offline mode.',
+                variant: 'destructive',
+            });
+        }
+    }, [error, toast]);
 
     // CRUD operations for itineraries
     const addItinerary = useCallback((data: ItineraryFormData | Omit<Itinerary, 'id' | 'createdAt' | 'updatedAt'>): Itinerary => {
@@ -275,14 +258,13 @@ export function useItineraries() {
 
     const clearAllItineraries = useCallback(() => {
         setItineraries([]);
-        localStorage.removeItem(STORAGE_KEY);
-        setStorageError(false);
-    }, []);
+        clearAll();
+    }, [clearAll]);
 
     return {
         itineraries,
         isLoading,
-        storageError,
+        storageError: !!error,
         // Itinerary CRUD
         addItinerary,
         updateItinerary,

@@ -1,38 +1,37 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { BucketListItem, BucketListFormData, BucketListCategory, BucketListPriority } from '@/types/bucketlist';
 import { Memory } from '@/types/memory';
+import { useOfflineStorage } from '@/hooks/useOfflineStorage';
 
 const STORAGE_KEY = 'journo-bucket-list';
 
 const generateId = () => Math.random().toString(36).substring(2, 15);
 
 export function useBucketList(memories: Memory[] = []) {
+  const {
+    items: storedItems,
+    isLoading,
+    saveAll,
+  } = useOfflineStorage<BucketListItem>({
+    storeName: 'bucketList',
+    localStorageKey: STORAGE_KEY,
+  });
+
   const [items, setItems] = useState<BucketListItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Load from localStorage
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setItems(JSON.parse(stored));
-      }
-    } catch (e) {
-      console.error('Failed to load bucket list:', e);
-    }
-    setIsLoading(false);
-  }, []);
-
-  // Save to localStorage
+  // Sync from IndexedDB
   useEffect(() => {
     if (!isLoading) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-      } catch (e) {
-        console.error('Failed to save bucket list:', e);
-      }
+      setItems(storedItems);
     }
-  }, [items, isLoading]);
+  }, [storedItems, isLoading]);
+
+  // Save to IndexedDB
+  useEffect(() => {
+    if (!isLoading && items.length > 0) {
+      saveAll(items);
+    }
+  }, [items, isLoading, saveAll]);
 
   // Add new item
   const addItem = useCallback((data: BucketListFormData): BucketListItem => {

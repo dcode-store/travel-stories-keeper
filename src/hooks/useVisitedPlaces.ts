@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { VisitedPlace, PlaceStats, CONTINENT_MAP, COUNTRY_NAME_TO_CODE, COUNTRY_CODE_TO_NAME } from '@/types/places';
 import { Memory } from '@/types/memory';
+import { useOfflineStorage } from '@/hooks/useOfflineStorage';
 
 const STORAGE_KEY = 'journo-visited-places';
 const TOTAL_COUNTRIES = 195;
@@ -32,32 +33,30 @@ const extractCountryFromLocation = (location: string): { code: string; name: str
 };
 
 export function useVisitedPlaces(memories: Memory[] = []) {
+  const {
+    items: storedPlaces,
+    isLoading,
+    saveAll,
+  } = useOfflineStorage<VisitedPlace>({
+    storeName: 'visitedPlaces',
+    localStorageKey: STORAGE_KEY,
+  });
+
   const [visitedPlaces, setVisitedPlaces] = useState<VisitedPlace[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Load from localStorage
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setVisitedPlaces(JSON.parse(stored));
-      }
-    } catch (e) {
-      console.error('Failed to load visited places:', e);
-    }
-    setIsLoading(false);
-  }, []);
-
-  // Save to localStorage
+  // Sync from IndexedDB
   useEffect(() => {
     if (!isLoading) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(visitedPlaces));
-      } catch (e) {
-        console.error('Failed to save visited places:', e);
-      }
+      setVisitedPlaces(storedPlaces);
     }
-  }, [visitedPlaces, isLoading]);
+  }, [storedPlaces, isLoading]);
+
+  // Save to IndexedDB
+  useEffect(() => {
+    if (!isLoading && visitedPlaces.length > 0) {
+      saveAll(visitedPlaces);
+    }
+  }, [visitedPlaces, isLoading, saveAll]);
 
   // Auto-sync places from memories
   const syncFromMemories = useCallback(() => {
