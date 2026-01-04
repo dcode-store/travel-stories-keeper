@@ -1,16 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Memory, MemoryFormData, MemoryFilters } from '@/types/memory';
 import { useToast } from '@/hooks/use-toast';
+import { useOfflineStorage } from '@/hooks/useOfflineStorage';
 
 const STORAGE_KEY = 'journo-memories';
-const MAX_STORAGE_SIZE = 4 * 1024 * 1024; // 4MB limit (localStorage is ~5MB)
 
 const generateId = () => Math.random().toString(36).substring(2, 15);
-
-// Helper to estimate storage size
-const getStorageSize = (data: unknown): number => {
-  return new Blob([JSON.stringify(data)]).size;
-};
 
 // Default empty filters
 export const defaultFilters: MemoryFilters = {
@@ -35,61 +30,47 @@ export const hasActiveFilters = (filters: MemoryFilters): boolean => {
 };
 
 export function useMemories() {
-  const [memories, setMemories] = useState<Memory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [storageError, setStorageError] = useState(false);
   const { toast } = useToast();
+  const {
+    items: storedMemories,
+    isLoading,
+    error,
+    saveAll,
+    clearAll,
+  } = useOfflineStorage<Memory>({
+    storeName: 'memories',
+    localStorageKey: STORAGE_KEY,
+  });
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          const sorted = parsed.sort((a: Memory, b: Memory) =>
-            new Date(b.date).getTime() - new Date(a.date).getTime()
-          );
-          setMemories(sorted);
-        } catch (e) {
-          console.error('Failed to parse memories:', e);
-          // Clear corrupted data
-          localStorage.removeItem(STORAGE_KEY);
-        }
-      }
-    } catch (e) {
-      console.error('Failed to access localStorage:', e);
-    }
-    setIsLoading(false);
-  }, []);
+  const [memories, setMemories] = useState<Memory[]>([]);
 
-  // Save to localStorage whenever memories change
+  // Sync from IndexedDB
   useEffect(() => {
     if (!isLoading) {
-      try {
-        const dataSize = getStorageSize(memories);
-        if (dataSize > MAX_STORAGE_SIZE) {
-          setStorageError(true);
-          toast({
-            title: 'Storage limit reached',
-            description: 'Your memories are too large to save locally. Consider removing some images or exporting to PDF.',
-            variant: 'destructive',
-          });
-          return;
-        }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(memories));
-        setStorageError(false);
-      } catch (e) {
-        console.error('Failed to save memories:', e);
-        setStorageError(true);
-        toast({
-          title: 'Storage error',
-          description: 'Could not save memories. Storage may be full.',
-          variant: 'destructive',
-        });
-      }
+      const sorted = [...storedMemories].sort((a, b) =>
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      setMemories(sorted);
     }
-  }, [memories, isLoading, toast]);
+  }, [storedMemories, isLoading]);
+
+  // Save to IndexedDB whenever memories change
+  useEffect(() => {
+    if (!isLoading && memories.length > 0) {
+      saveAll(memories);
+    }
+  }, [memories, isLoading, saveAll]);
+
+  // Show error toast
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: 'Storage error',
+        description: 'Could not save memories. Using offline mode.',
+        variant: 'destructive',
+      });
+    }
+  }, [error, toast]);
 
   const addMemory = useCallback((data: MemoryFormData) => {
     const now = Date.now();
@@ -128,9 +109,8 @@ export function useMemories() {
 
   const clearAllMemories = useCallback(() => {
     setMemories([]);
-    localStorage.removeItem(STORAGE_KEY);
-    setStorageError(false);
-  }, []);
+    clearAll();
+  }, [clearAll]);
 
   // Extract all unique tags from memories
   const allTags = useMemo(() => {
@@ -230,7 +210,7 @@ export function useMemories() {
   return {
     memories,
     isLoading,
-    storageError,
+    storageError: !!error,
     addMemory,
     updateMemory,
     deleteMemory,
