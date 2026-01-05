@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useItineraries } from '@/hooks/useItineraries';
-import { useLastRoute } from '@/hooks/useLastRoute';
 import { ItineraryCard } from '@/components/itinerary/ItineraryCard';
 import { ItineraryForm } from '@/components/itinerary/ItineraryForm';
 import { ItineraryDetail } from '@/components/itinerary/ItineraryDetail';
@@ -34,9 +33,6 @@ const Itineraries = () => {
     deleteTransportation,
   } = useItineraries();
   const { toast } = useToast();
-
-  // Track last visited route
-  useLastRoute();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isAiPlannerOpen, setIsAiPlannerOpen] = useState(false);
