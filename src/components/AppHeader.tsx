@@ -71,33 +71,25 @@ export function AppHeader() {
             <TooltipTrigger asChild>
               <div
                 className={cn(
-                  'flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all',
+                  'flex items-center justify-center w-8 h-8 rounded-full transition-all cursor-default',
                   isOnline
                     ? wasOffline
                       ? 'bg-green-500/10 text-green-600 dark:text-green-400'
-                      : 'bg-muted text-muted-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
                     : 'bg-orange-500/10 text-orange-600 dark:text-orange-400 animate-pulse'
                 )}
               >
                 {isOnline ? (
-                  <>
-                    <Wifi className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">
-                      {wasOffline ? 'Back Online' : 'Online'}
-                    </span>
-                  </>
+                  <Wifi className="w-4 h-4" />
                 ) : (
-                  <>
-                    <WifiOff className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Offline</span>
-                  </>
+                  <WifiOff className="w-4 h-4" />
                 )}
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
               {isOnline
-                ? 'Connected. Your data is synced.'
-                : 'Offline mode. Changes saved locally.'}
+                ? wasOffline ? 'Back Online' : 'Online'
+                : 'Offline - Changes saved locally'}
             </TooltipContent>
           </Tooltip>
 
