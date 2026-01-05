@@ -26,7 +26,13 @@ export function AppHeader() {
     { path: '/bucket-list', label: 'Bucket List', icon: Star },
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    // Handle /trips being the default route (also accessible via /)
+    if (path === '/trips') {
+      return location.pathname === '/trips' || location.pathname === '/';
+    }
+    return location.pathname === path;
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
