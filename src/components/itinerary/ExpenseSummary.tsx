@@ -1,11 +1,28 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Itinerary } from '@/types/itinerary';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { DollarSign, TrendingDown, TrendingUp, Users, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DollarSign, TrendingDown, TrendingUp, Users, AlertCircle, CheckCircle2, ArrowRightLeft } from 'lucide-react';
 import { startOfDay } from 'date-fns';
 import { ExpenseCharts } from './ExpenseCharts';
+import { CurrencyConverter } from '@/components/CurrencyConverter';
+import { useCurrencyRates, CURRENCIES } from '@/hooks/useCurrencyRates';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface ExpenseSummaryProps {
   itinerary: Itinerary;
@@ -25,6 +42,10 @@ export function ExpenseSummary({ itinerary, showCharts = false }: ExpenseSummary
   const tripEnd = startOfDay(new Date(itinerary.endDate));
   const isOngoingTrip = today >= tripStart && today <= tripEnd;
   const isUpcoming = today < tripStart;
+  
+  const [displayCurrency, setDisplayCurrency] = useState(itinerary.currency || 'USD');
+  const { convert, formatCurrency: formatWithSymbol } = useCurrencyRates();
+  const tripCurrency = itinerary.currency || 'USD';
 
   const expenses = useMemo((): ExpenseBreakdown => {
     const activities = itinerary.activities.reduce((sum, a) => sum + (a.cost || 0), 0);
@@ -54,11 +75,23 @@ export function ExpenseSummary({ itinerary, showCharts = false }: ExpenseSummary
   const perPersonExpense = travelerCount > 1 ? expenses.total / travelerCount : expenses.total;
   const isGroupTrip = itinerary.tripType === 'group' || itinerary.tripType === 'family';
 
-  const currency = itinerary.currency || 'USD';
-
-  const formatCurrency = (amount: number) => {
-    return `${currency} ${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  // Convert amount to display currency if different from trip currency
+  const convertAmount = (amount: number) => {
+    if (displayCurrency === tripCurrency) return amount;
+    return convert(amount, tripCurrency, displayCurrency);
   };
+
+  const formatCurrency = (amount: number, useDisplay = true) => {
+    const curr = useDisplay ? displayCurrency : tripCurrency;
+    const displayAmount = useDisplay ? convertAmount(amount) : amount;
+    return `${curr} ${displayAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  };
+
+  const currencyOptions = Object.entries(CURRENCIES).map(([code, info]) => ({
+    value: code,
+    label: code,
+    name: info.name,
+  }));
 
   return (
     <Card className="border-primary/20">
@@ -68,10 +101,52 @@ export function ExpenseSummary({ itinerary, showCharts = false }: ExpenseSummary
             <DollarSign className="w-5 h-5 text-primary" />
             Expenses
           </CardTitle>
-          {isOngoingTrip && (
-            <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">
-              Ongoing Trip
-            </Badge>
+          <div className="flex items-center gap-2">
+            {isOngoingTrip && (
+              <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">
+                Ongoing Trip
+              </Badge>
+            )}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 h-8">
+                  <ArrowRightLeft className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Convert</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Currency Converter</DialogTitle>
+                </DialogHeader>
+                <CurrencyConverter 
+                  defaultFrom={tripCurrency} 
+                  defaultTo={displayCurrency !== tripCurrency ? displayCurrency : 'EUR'}
+                  defaultAmount={expenses.total}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+        
+        {/* Display Currency Selector */}
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-xs text-muted-foreground">Show in:</span>
+          <Select value={displayCurrency} onValueChange={setDisplayCurrency}>
+            <SelectTrigger className="h-7 w-24 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {currencyOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {displayCurrency !== tripCurrency && (
+            <span className="text-xs text-muted-foreground">
+              (Trip: {tripCurrency})
+            </span>
           )}
         </div>
       </CardHeader>
@@ -79,7 +154,14 @@ export function ExpenseSummary({ itinerary, showCharts = false }: ExpenseSummary
         {/* Total Spent */}
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">Total Spent</span>
-          <span className="text-2xl font-bold">{formatCurrency(expenses.total)}</span>
+          <div className="text-right">
+            <span className="text-2xl font-bold">{formatCurrency(expenses.total)}</span>
+            {displayCurrency !== tripCurrency && (
+              <div className="text-xs text-muted-foreground">
+                {formatCurrency(expenses.total, false)}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Budget Progress (only if budget is set) */}
